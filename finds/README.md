@@ -3,23 +3,25 @@
 Оценка — с точки зрения фабрики (см. `CLAUDE.md`). Звёзды — на дату находки.
 Широкие исследования — в `research/`.
 
-## Складывающийся конвейер (гипотеза, проверить на сервере)
+## Что добавить к своей ферме (гипотеза, проверить на сервере)
 
-Для обучающих видео по интерфейсам платформ:
+Ядро уже есть: своя ферма (сцены кодом → кадры в Chromium → ffmpeg), Whisper
+large-v3 на видеокарте, сетка долей, маски Apple Vision. Находки дополняют
+его, а не заменяют:
 
-1. **Playwright MCP** — агент проходит сценарий на настоящей платформе и
-   записывает видео с анимированным курсором.
-2. **HyperFrames** (+ **gsap-skills**) — запись в композицию: зум, выноски,
-   титры, анимация. Рендер с NVENC (`--gpu`).
-3. **Озвучка** — **Silero** на процессоре (основная, русский) или
+1. **Playwright MCP** — запись настоящих интерфейсов с анимированным курсором
+   для обучающих роликов.
+2. **Озвучка** — **Silero** на процессоре (основная, русский) или
    **omnivoice.cpp** на видеокарте, если нужен клон постоянного голоса.
-4. **Orkas-VideoStudio** — монтаж: паузы, субтитры (**whisper.cpp на CUDA 12**),
-   озвучка, громкость.
-5. **SkillSpector** — перед установкой любого из навыков выше.
+3. **Приёмы и блоки для сцен** — режиссура **product-launch-motion**, блоки и
+   захват кадров через BeginFrame из **HyperFrames**, **gsap-skills** (если
+   ферма на GSAP).
+4. **Музыка** — **ACE-Step 1.5**, апскейл и плавность — **Video2X**, обложки —
+   **stable-diffusion.cpp**.
+5. **SkillSpector** — перед установкой любого навыка.
 
-Промо-клипы и UI-ролики без записи экрана — **product-launch-motion**.
-Музыка — **ACE-Step 1.5**, апскейл и плавность — **Video2X**, обложки —
-**stable-diffusion.cpp**.
+**Главный пробел — потолок фермы** (живописные персонажи, узнаваемое лицо,
+живописная среда): локально на 4 ГБ не закрывается, см. «Пробелы».
 
 ## Все находки
 
@@ -27,17 +29,16 @@
 |---|---|---|---|
 | SkillSpector | проверка навыков перед установкой | **взять** | [skillspector.md](skillspector.md) |
 | Silero TTS v5 | основная русская озвучка, на CPU | **взять** | [silero-tts.md](silero-tts.md) |
-| whisper.cpp на CUDA 12 | русские субтитры на видеокарте (настройка HyperFrames) | **взять** | [whisper-cpp-cuda.md](whisper-cpp-cuda.md) |
-| HyperFrames | анимация, клипы, обучающие видео; рендер HTML → MP4 | **попробовать** (первым) | [hyperframes.md](hyperframes.md) |
+| product-launch-motion | справочник режиссуры: та же техника, что у фермы | **взять** (справочник) | [product-launch-motion.md](product-launch-motion.md) |
 | Playwright MCP (видео) | запись настоящих интерфейсов с курсором | **попробовать** | [playwright-mcp-video.md](playwright-mcp-video.md) |
-| gsap-skills | точная GSAP-анимация внутри HyperFrames | **попробовать** (с HyperFrames) | [gsap-skills.md](gsap-skills.md) |
-| omnivoice.cpp | русская озвучка с клоном голоса на GPU, сервер для Orkas | **попробовать** | [omnivoice-cpp.md](omnivoice-cpp.md) |
-| Orkas-VideoStudio | монтаж записей, субтитры, озвучка поверх HyperFrames | **попробовать** (вторым) | [orkas-videostudio.md](orkas-videostudio.md) |
-| product-launch-motion | промо и UI-ролики под музыку; v1 — под озвучку | **попробовать** | [product-launch-motion.md](product-launch-motion.md) |
+| omnivoice.cpp | русская озвучка с клоном голоса на GPU | **попробовать** | [omnivoice-cpp.md](omnivoice-cpp.md) |
+| HyperFrames | блоки сцен, навыки, захват кадров через BeginFrame — не замена ферме | **попробовать** (по частям) | [hyperframes.md](hyperframes.md) |
+| gsap-skills | точная GSAP-анимация, если ферма на GSAP | **попробовать** | [gsap-skills.md](gsap-skills.md) |
 | Video2X | апскейл и интерполяция кадров на Vulkan | **попробовать** | [video2x.md](video2x.md) |
 | ACE-Step 1.5 | фоновая музыка, режим «≤4 ГБ» | **попробовать** | [ace-step-1-5.md](ace-step-1-5.md) |
 | stable-diffusion.cpp | обложки и фоны без PyTorch | **попробовать** | [stable-diffusion-cpp.md](stable-diffusion-cpp.md) |
-| GigaAM v3 | точное распознавание русского | **попробовать** | [gigaam.md](gigaam.md) |
+| GigaAM v3 | точное распознавание русского, если Whisper не устроит | позже | [gigaam.md](gigaam.md) |
+| Orkas-VideoStudio | монтаж поверх HyperFrames — пересекается с фермой | позже (идеи) | [orkas-videostudio.md](orkas-videostudio.md) |
 | ESpeech-TTS-1 | качественный русский с клоном (F5-TTS) | **попробовать** (запасной) | [espeech-tts.md](espeech-tts.md) |
 | qwentts.cpp | озвучка на GPU, Pascal поддержан официально; русский слабее | позже (запасной) | [qwentts-cpp.md](qwentts-cpp.md) |
 | Remotion | то же, что HyperFrames, на React | позже (запасной) | [remotion.md](remotion.md) |
@@ -47,6 +48,7 @@
 | Blender Lab MCP | 3D-анимация через Blender | позже | [blender-lab-mcp.md](blender-lab-mcp.md) |
 | Claude-Code-Video-Toolkit | список ссылок (разобран) | источник | [claude-code-video-toolkit.md](claude-code-video-toolkit.md) |
 | awesome-motion-design-agent-skills | список ссылок (разобран) + 5 слабых навыков | навыки отклонены | [awesome-motion-design-agent-skills.md](awesome-motion-design-agent-skills.md) |
+| whisper.cpp на CUDA 12 | субтитры на видеокарте | не нужно — Whisper large-v3 уже работает | [whisper-cpp-cuda.md](whisper-cpp-cuda.md) |
 | everything-claude-code (ECC) | сборка для разработки программ | отклонено | [everything-claude-code.md](everything-claude-code.md) |
 
 ## Из исследования 2026-10-26, без карточек
@@ -87,9 +89,14 @@
 
 ## Пробелы
 
-1. ~~Запись экрана~~ — закрыто: Playwright MCP + навык `playwright-recording`.
-2. ~~Субтитры~~ — закрыто: whisper.cpp на CUDA 12, GigaAM.
-3. ~~Локальная озвучка~~ — найдено: Silero (основная), omnivoice.cpp (клон
-   голоса). Осталось проверить на сервере и написать обёртку Silero для Orkas.
-4. **Генеративное ИИ-видео** — на 4 ГБ не решается; варианты: аренда GPU или
-   апгрейд видеокарты (RTX 3060 12 ГБ — лучшее соотношение).
+1. **Потолок фермы — живописные персонажи, узнаваемое лицо, живописная
+   среда** (клип «Город пробок»). Главный открытый пробел. На 4 ГБ локально
+   не решается; варианты для исследования: генерация на маке (медленно),
+   генерация через сервисы (без монетизации допустимы бесплатные тарифы —
+   проверить водяные знаки и сохранение лица), аренда GPU (проверить
+   способы оплаты), апгрейд видеокарты (RTX 3060 12 ГБ — лучшее
+   соотношение).
+2. ~~Запись экрана~~ — закрыто: Playwright MCP + навык `playwright-recording`.
+3. ~~Субтитры~~ — уже есть на фабрике: Whisper large-v3 на видеокарте.
+4. ~~Локальная озвучка~~ — найдено: Silero (основная), omnivoice.cpp (клон
+   голоса). Осталось проверить на сервере.

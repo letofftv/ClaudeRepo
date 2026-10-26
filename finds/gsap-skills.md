@@ -3,7 +3,7 @@
 - **Ссылка:** https://github.com/greensock/gsap-skills
 - **Что это:** официальные навыки GSAP для агентов от GreenSock
 - **Найдено:** 2026-10-26, из awesome-motion-design-agent-skills
-- **Статус:** попробовать (вместе с HyperFrames)
+- **Статус:** попробовать, если ферма использует GSAP (неизвестно — уточнить); от HyperFrames не зависит
 
 ## Зачем фабрике
 

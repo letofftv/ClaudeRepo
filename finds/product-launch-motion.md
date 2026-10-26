@@ -3,7 +3,7 @@
 - **Ссылка:** https://github.com/AbubakrChan/product-launch-motion
 - **Что это:** навык Claude Code: ссылка на сайт → промо-ролик 60 fps с музыкой, звуками и motion blur, полностью из HTML
 - **Найдено:** 2026-10-26, из awesome-motion-design-agent-skills
-- **Статус:** попробовать
+- **Статус:** взять как справочник режиссуры для фермы (пересмотрено 2026-10-26: техника та же — HTML как функция времени, кадры в браузере, ffmpeg; `references/technique.md` и `references/prompts.md` переносятся на ферму напрямую)
 
 ## Зачем фабрике
 
