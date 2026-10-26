@@ -33,6 +33,10 @@
 - Пересекается с Remotion: брать что-то одно. Есть навык переноса
   `remotion-to-hyperframes`.
 - Нужны Node.js 22+ и FFmpeg.
+- Субтитры: встроенный whisper.cpp по умолчанию собирается **только для CPU**
+  с моделью `small.en` — для русского и для видеокарты см.
+  `whisper-cpp-cuda.md`. Есть встроенная альтернатива на CPU с русским —
+  Parakeet TDT 0.6B v3 (`hyperframes models install parakeet`).
 
 ## Как подключить
 

@@ -1,6 +1,7 @@
 # Находки
 
 Оценка — с точки зрения фабрики (см. `CLAUDE.md`). Звёзды — на дату находки.
+Широкие исследования — в `research/`.
 
 ## Складывающийся конвейер (гипотеза, проверить на сервере)
 
@@ -9,23 +10,36 @@
 1. **Playwright MCP** — агент проходит сценарий на настоящей платформе и
    записывает видео с анимированным курсором.
 2. **HyperFrames** (+ **gsap-skills**) — запись в композицию: зум, выноски,
-   титры, анимация.
-3. **Orkas-VideoStudio** — монтаж: паузы, субтитры (whisper.cpp), озвучка,
-   громкость.
-4. **SkillSpector** — перед установкой любого из навыков выше.
+   титры, анимация. Рендер с NVENC (`--gpu`).
+3. **Озвучка** — локальный сервер **omnivoice.cpp** или **qwentts.cpp** на
+   видеокарте (или **Silero** на процессоре).
+4. **Orkas-VideoStudio** — монтаж: паузы, субтитры (**whisper.cpp на CUDA 12**),
+   озвучка, громкость.
+5. **SkillSpector** — перед установкой любого из навыков выше.
 
 Промо-клипы и UI-ролики без записи экрана — **product-launch-motion**.
+Музыка — **ACE-Step 1.5**, апскейл и плавность — **Video2X**, обложки —
+**stable-diffusion.cpp**.
 
 ## Все находки
 
 | Находка | Для чего на фабрике | Статус | Карточка |
 |---|---|---|---|
 | SkillSpector | проверка навыков перед установкой | **взять** | [skillspector.md](skillspector.md) |
+| whisper.cpp на CUDA 12 | русские субтитры на видеокарте (настройка HyperFrames) | **взять** | [whisper-cpp-cuda.md](whisper-cpp-cuda.md) |
 | HyperFrames | анимация, клипы, обучающие видео; рендер HTML → MP4 | **попробовать** (первым) | [hyperframes.md](hyperframes.md) |
 | Playwright MCP (видео) | запись настоящих интерфейсов с курсором | **попробовать** | [playwright-mcp-video.md](playwright-mcp-video.md) |
 | gsap-skills | точная GSAP-анимация внутри HyperFrames | **попробовать** (с HyperFrames) | [gsap-skills.md](gsap-skills.md) |
+| omnivoice.cpp | русская озвучка с клоном голоса на GPU, сервер для Orkas | **попробовать** (озвучка №1) | [omnivoice-cpp.md](omnivoice-cpp.md) |
+| qwentts.cpp | озвучка на GPU, Pascal поддержан официально | **попробовать** (в паре) | [qwentts-cpp.md](qwentts-cpp.md) |
+| Silero TTS v5 | лучший русский на CPU | **попробовать** (лицензия!) | [silero-tts.md](silero-tts.md) |
 | Orkas-VideoStudio | монтаж записей, субтитры, озвучка поверх HyperFrames | **попробовать** (вторым) | [orkas-videostudio.md](orkas-videostudio.md) |
 | product-launch-motion | промо и UI-ролики под музыку; v1 — под озвучку | **попробовать** | [product-launch-motion.md](product-launch-motion.md) |
+| Video2X | апскейл и интерполяция кадров на Vulkan | **попробовать** | [video2x.md](video2x.md) |
+| ACE-Step 1.5 | фоновая музыка, режим «≤4 ГБ» | **попробовать** | [ace-step-1-5.md](ace-step-1-5.md) |
+| stable-diffusion.cpp | обложки и фоны без PyTorch | **попробовать** | [stable-diffusion-cpp.md](stable-diffusion-cpp.md) |
+| GigaAM v3 | точное распознавание русского | **попробовать** | [gigaam.md](gigaam.md) |
+| ESpeech-TTS-1 | качественный русский с клоном (F5-TTS) | **попробовать** (запасной) | [espeech-tts.md](espeech-tts.md) |
 | Remotion | то же, что HyperFrames, на React | позже (запасной) | [remotion.md](remotion.md) |
 | digitalsamba video toolkit | навык записи браузера, список открытых моделей | позже (по частям) | [digitalsamba-video-toolkit.md](digitalsamba-video-toolkit.md) |
 | Manim | объясняющие вставки: схемы, формулы | позже | [manim.md](manim.md) |
@@ -34,6 +48,23 @@
 | Claude-Code-Video-Toolkit | список ссылок (разобран) | источник | [claude-code-video-toolkit.md](claude-code-video-toolkit.md) |
 | awesome-motion-design-agent-skills | список ссылок (разобран) + 5 слабых навыков | навыки отклонены | [awesome-motion-design-agent-skills.md](awesome-motion-design-agent-skills.md) |
 | everything-claude-code (ECC) | сборка для разработки программ | отклонено | [everything-claude-code.md](everything-claude-code.md) |
+
+## Из исследования 2026-10-26, без карточек
+
+Подробности и источники — `research/2026-10-26-local-voice-and-video.md`.
+
+- **Позже:** Speaches + Piper (запасная озвучка на CPU), Chatterbox
+  Multilingual (на грани 4 ГБ, водяной знак), rembg (только с явной
+  бесплатной моделью), Robust Video Matting, DeepFilterNet и
+  audio-separator (очистка голоса), Applio/RVC (единый голос диктора),
+  MuseTalk 1.5 (говорящая голова — может не влезть), AnimateDiff и
+  LTX-Video 2B через ComfyUI cu126 (ИИ-анимация, медленно), аренда RunPod
+  для видеомоделей.
+- **Не для этой видеокарты:** Wan 2.2, LTX-2.x, HunyuanVideo 1.5, FramePack,
+  CogVideoX, SVD, LocalAI, VoxCPM2, Zonos, Dia, Orpheus, LatentSync,
+  EchoMimic, YuE.
+- **Отклонено по лицензии весов:** XTTS-v2, базовый F5-TTS, Fish Speech,
+  MusicGen, MMAudio, Wav2Lip, RMBG-2.0, MatAnyone.
 
 ## Остальное из подборки по анимации (2026-10-26), без карточек
 
@@ -52,11 +83,11 @@
 
 Пусто.
 
-## Пробелы — что поискать дальше
+## Пробелы
 
-1. **Локальная озвучка (TTS)** на видеокарте с OpenAI-совместимым API —
-   чтобы подключить к Orkas без облака. Кандидат по названию: Qwen3-TTS.
-2. **Локальные видеомодели и музыка** на GPU — запуск LTX-2.3, ACE-Step,
-   FLUX.2 у себя (ComfyUI или отдельные серверы), а не через Modal/RunPod.
-3. ~~Запись экрана~~ — закрыто: Playwright MCP + навык `playwright-recording`.
-4. ~~Субтитры~~ — закрыто: whisper.cpp в HyperFrames/Orkas.
+1. ~~Запись экрана~~ — закрыто: Playwright MCP + навык `playwright-recording`.
+2. ~~Субтитры~~ — закрыто: whisper.cpp на CUDA 12, GigaAM.
+3. ~~Локальная озвучка~~ — найдено: omnivoice.cpp, qwentts.cpp, Silero.
+   Осталось проверить на сервере.
+4. **Генеративное ИИ-видео** — на 4 ГБ не решается; варианты: аренда GPU или
+   апгрейд видеокарты (RTX 3060 12 ГБ — лучшее соотношение).
