@@ -10,7 +10,19 @@
 | Claude-Code-Video-Toolkit | список ссылок; запись экрана через Playwright для роликов по UI | позже (разобрать ссылки) | [claude-code-video-toolkit.md](claude-code-video-toolkit.md) |
 | ArcReel | конвейер «сценарий → ИИ-видео» | позже | [arcreel.md](arcreel.md) |
 | Blender Lab MCP | 3D-анимация через Blender | позже | [blender-lab-mcp.md](blender-lab-mcp.md) |
+| awesome-motion-design-agent-skills | список ссылок по моушн-дизайну + 5 слабых навыков | навыки отклонены; ссылки — в очередь | [awesome-motion-design-agent-skills.md](awesome-motion-design-agent-skills.md) |
 | everything-claude-code (ECC) | сборка для разработки программ | отклонено | [everything-claude-code.md](everything-claude-code.md) |
+
+## Очередь на проверку
+
+Ссылки из других находок, ещё не разобранные:
+
+- `greensock/gsap-skills` — официальные навыки GSAP; дополнение к HyperFrames.
+- `AbubakrChan/product-launch-motion` — сайт → ролик через Playwright и FFmpeg.
+- `Orkas-AI/Orkas-VideoStudio` — 14 навыков для видео.
+- `NVIDIA/SkillSpector` — сканер навыков перед установкой (для самой песочницы).
+- Из Claude-Code-Video-Toolkit: digitalsamba video toolkit (`/record-demo`),
+  Playwright MCP `--save-video`.
 
 ## Остальное из подборки по анимации (2026-10-26), без карточек
 
@@ -25,8 +37,6 @@
 - **Graphite, Friction, Aseprite** — программы для ручной работы, не для
   конвейера. Отклонено для фабрики.
 - **oil-motion** — анимации для сайтов. Отклонено: фабрика не делает сайты.
-- **awesome-motion-design-agent-skills** — список навыков для моушн-дизайна.
-  Справочник для будущих поисков.
 
 ## Пробелы — что поискать дальше
 
