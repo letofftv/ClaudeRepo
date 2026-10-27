@@ -1,0 +1,26 @@
+# Copy to docker-compose.yml next to this file, then:
+#   HUB_TOKEN=... docker compose up -d --build
+# Not tested in the sandbox where it was written — check on the server.
+services:
+  hub:
+    build:
+      context: ..
+      dockerfile: app/Dockerfile
+    restart: unless-stopped
+    ports:
+      # only this machine; for VPN access put the server's VPN address instead of 127.0.0.1
+      - "127.0.0.1:8787:8787"
+    environment:
+      HUB_TOKEN: ${HUB_TOKEN:?set HUB_TOKEN}
+      NVIDIA_DRIVER_CAPABILITIES: compute,video,utility   # NVENC and nvidia-smi inside
+    volumes:
+      - ${HOME}/hub-work:/work
+      # create config/tools.local.json first, otherwise Docker makes a directory here
+      - ./config/tools.local.json:/repo/app/config/tools.local.json:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]

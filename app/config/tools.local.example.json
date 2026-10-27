@@ -1,0 +1,20 @@
+{
+  "_comment": "Скопировать в tools.local.json (он не попадает в git) и вписать свои пути. Здесь же можно переопределить команду любого инструмента или выключить лишние.",
+  "vars": {
+    "tts_url": "http://127.0.0.1:8880/v1",
+    "tts_model": "tts-1",
+    "whisper_cli": "/opt/whisper.cpp/build/bin/whisper-cli",
+    "whisper_model": "/opt/models/ggml-large-v3.bin",
+    "sd_bin": "/opt/stable-diffusion.cpp/build/bin/sd",
+    "sd_model": "/opt/models/sd15.safetensors"
+  },
+  "tools": [
+    {
+      "id": "whisper",
+      "_comment": "пример: на сервере faster-whisper вместо whisper.cpp",
+      "enabled": false,
+      "command": ["whisper-ctranslate2", "{input}", "--language", "{lang}", "--model", "large-v3", "--device", "cuda", "--compute_type", "int8_float32", "--output_format", "srt", "--output_dir", "{out}"]
+    }
+  ],
+  "disable": ["transcode_nvenc"]
+}

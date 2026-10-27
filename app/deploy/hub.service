@@ -1,0 +1,21 @@
+# systemd unit for the home hub (Ubuntu). Copy to /etc/systemd/system/hub.service,
+# set User and paths, put the token into an override:
+#   sudo systemctl edit hub   ->   [Service]
+#                                  Environment=HUB_TOKEN=...
+[Unit]
+Description=Home hub (ClaudeRepo/app)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=hub
+WorkingDirectory=/home/hub/ClaudeRepo/app
+ExecStart=/usr/bin/python3 -m hub --config config/hub.json
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

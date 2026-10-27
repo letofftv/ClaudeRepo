@@ -1,2 +1,4 @@
 __pycache__/
 *.pyc
+app/config/hub.json
+app/config/tools.local.json
