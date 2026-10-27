@@ -51,6 +51,34 @@ large-v3 на видеокарте, сетка долей, маски Apple Visi
 | whisper.cpp на CUDA 12 | субтитры на видеокарте | не нужно — Whisper large-v3 уже работает | [whisper-cpp-cuda.md](whisper-cpp-cuda.md) |
 | everything-claude-code (ECC) | сборка для разработки программ | отклонено | [everything-claude-code.md](everything-claude-code.md) |
 
+## Музыка и звук (2026-10-27)
+
+Собранный пакет навыков — [`packs/music-studio`](../packs/music-studio/README.md);
+исследование — `research/2026-10-27-audio-production.md`.
+
+| Находка | Для чего | Статус | Карточка |
+|---|---|---|---|
+| music-studio (свой пакет) | запись вокала, сведение под минусовку, мастеринг, замеры, Ableton | **взять** | [packs/music-studio](../packs/music-studio/README.md) |
+| Producer Pal | MCP для Ableton Live 12.3+ Suite (Max for Live) | **попробовать** | [producer-pal.md](producer-pal.md) |
+| LiveBridge | MCP для Ableton с упором на сведение и мастеринг | **попробовать** (осторожно) | [livebridge.md](livebridge.md) |
+| python-audio-separator | стемы и вокал, модели с GitHub | **попробовать** | [audio-separator.md](audio-separator.md) |
+| Matchering 2.0 | мастеринг по референсу | **попробовать** | [matchering.md](matchering.md) |
+| Pedalboard | обработка кодом с плагинами владельца | **попробовать** | [pedalboard.md](pedalboard.md) |
+| ACE-Step 1.5 | наброски песен (MLX на маке), фоновая музыка | **попробовать** | [ace-step-1-5.md](ace-step-1-5.md) |
+
+Без карточек (подробности в исследовании):
+- **Позже:** wstierhout/ableton-live-mcp (без выполнения кода), REAPER MCP
+  (`bonfire-systems/reaper-mcp`, `xDarkzx/Reaper-MCP` — если DAW будет
+  REAPER), Audacity-MCP, audio-analyzer-rs, demucs-mlx, whisperX (русские
+  таймкоды), MuScriptor/SOME/basic-pitch (аудио → MIDI), librosa, Essentia,
+  beat_this, Magenta RealTime 2.
+- **Отклонено:** Audition + MCP (нет официального, мосты требуют отключить
+  проверку подписи CEP; купить из России нельзя); ahujasid/ableton-mcp
+  (телеметрия по умолчанию); Simon-Kansara (заброшен); LivePilot (BSL,
+  внешние вызовы); ElevenLabs MCP (архив, недоступен из России); YuE2,
+  SongGeneration v2 (не для этого железа); ITO-Master, Diff-MST
+  (исследовательский уровень).
+
 ## Из пакета для фабрики 2026-10-26, без карточек
 
 Схема «живописный 2.5D» под 4 ГБ — `handoff/2026-10-26-clip-factory-4gb.md`.

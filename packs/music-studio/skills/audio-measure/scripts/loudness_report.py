@@ -62,11 +62,15 @@ def verdicts(r, target, tp_limit, role):
         return ["Не удалось измерить громкость."]
 
     if role == "beat":
+        # Engineers' consensus: drop a mastered beat by 6–10 dB; aim near −19 LUFS, capped at that range.
         gain = round(-19.0 - i, 1)
         if gain < 0:
+            drop = min(abs(gain), 10.0)
+            note = " (ограничено 10 дБ — дальше решать на слух)" if abs(gain) > 10 else ""
             out.append(
-                f"Минусовка громкая ({i} LUFS). Стартовая точка: опустить её на {abs(gain)} дБ "
-                "(к ~−19 LUFS), чтобы оставить запас под вокал и мастер. Это ориентир, а не правило."
+                f"Минусовка громкая ({i} LUFS). Стартовая точка: опустить её на {drop} дБ{note}, "
+                "чтобы оставить запас под вокал и мастер; для пережатых минусовок обычно 6–10 дБ. "
+                "Это ориентир, а не правило."
             )
         else:
             out.append(f"Минусовка уже тихая ({i} LUFS) — опускать не нужно.")
