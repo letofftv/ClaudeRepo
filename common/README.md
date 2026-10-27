@@ -8,7 +8,7 @@
 | Находка | Для чего | Статус | Карточка |
 |---|---|---|---|
 | SkillSpector (NVIDIA) | проверка навыков на уязвимости перед установкой | **взять** | [skillspector.md](finds/skillspector.md) |
-| everything-claude-code (ECC) | сборка для разработки программ | отклонено | [everything-claude-code.md](finds/everything-claude-code.md) |
+| everything-claude-code (ECC) | сборка для разработки программ — перенесена в [`coding/`](../coding/README.md) | отклонено | [everything-claude-code.md](../coding/finds/everything-claude-code.md) |
 
 ## Исследования
 

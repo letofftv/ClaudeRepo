@@ -19,6 +19,44 @@
 сохранение лица), аренда GPU (проверить оплату), апгрейд видеокарты (RTX
 3060 12 ГБ — лучшее соотношение).
 
+## Лучшее: навыки, плагины, MCP и репозитории (2026-10-27)
+
+Самые сильные находки 2026 года — не MCP-серверы, а наборы **«живописи
+кодом»** для той же архитектуры, что у фермы (кадр = f(t) в headless Chrome +
+ffmpeg). Они дают вид иллюстрированной книжки, но потолок «узнаваемое лицо»
+не снимают. Реалистичная связка для «Города пробок»:
+- живописные слои SD 1.5 — через **Comfy MCP** (ComfyUI на сервере);
+- говорящий живописный персонаж — **mesh-avatar-studio** (+ LivePortrait);
+- среда, переходы, мазки — **p5.brush** из ClaudeAnimationBase или paint-mv-skills.
+
+| # | Находка | Тип | Для чего | Статус |
+|---|---|---|---|---|
+| 1 | [ClaudeAnimationBase](finds/claude-animation-base.md) | набор + гайд агента | p5.brush: акварель, мазки, персонаж с 31 эмоцией | **попробовать** |
+| 2 | [paint-mv-skills](finds/paint-mv-skills.md) | 4 навыка | песня + текст → акварельный клип | **попробовать** (на фрагменте клипа) |
+| 3 | [mesh-avatar-studio](finds/mesh-avatar-studio.md) | приложение + рантайм | иллюстрация → говорящий 2D-аватар, офлайн-рендер | **попробовать** |
+| 4 | [lemo-opuscar](finds/lemo-opuscar.md) | библиотека стилей | 59 стилей кодом: аниме, импасто, акварель, тушь… | **попробовать** (читать, не ставить) |
+| 5 | [vocaloid-style-mv-pipeline](finds/vocaloid-style-mv-pipeline.md) | конвейер | кинетическая типографика текста песни, 9:16 | **попробовать** (проверить кириллицу) |
+| 6 | [Comfy MCP](finds/comfy-mcp.md) | MCP (официальный, бета) | Claude управляет ComfyUI на сервере | **попробовать** |
+| 7 | [motion-design-skill (LottieFiles)](https://github.com/LottieFiles/motion-design-skill) | 1 навык | «режиссёр движения»: принципы Диснея, тайминг | **попробовать** (сравнить с product-launch-motion, оставить один) |
+| 8 | [text-to-lottie](https://github.com/diffusionstudio/lottie) | навык | Lottie из текста или SVG | позже |
+| 9 | [anidoodle](https://github.com/alexgreensh/anidoodle) | плагин | 32 стиля «нарисовано кодом» — дублирует lemo-opuscar | позже |
+| 10 | [MCP for Blender](https://github.com/ahujasid/blender-mcp) | MCP | toon-3D; выполняет любой Python, телеметрия — выключать | позже |
+| 11 | [Remotion skills](https://github.com/remotion-dev/skills) | 12 навыков | только вместе с Remotion | позже |
+| 12 | [manim-skill](https://github.com/Yusuke710/manim-skill) | навык | диктор → TTS → Manim (TTS заменить на Silero) | позже |
+| 13 | [an + cutan](https://github.com/reeleehq/cutan) | библиотека | перекладная анимация из scene.md, липсинк — сырой | позже |
+| 14 | [pixel2motion](https://github.com/nolangz/pixel2motion) | навык | логотип → анимированный SVG для заставок | позже |
+| — | [awesome-claude-video-skills](finds/awesome-claude-video-skills.md) | подборка | 362 репозитория с пометками SAFE/CAUTION | источник |
+
+**Отклонено:** character-animation-skill (кадры через Gemini — платно,
+недоступно из России), Spine-инструменты (нужна платная лицензия
+редактора), After Effects MCP (Adobe не продаётся в России), Rive MCP и
+Lottie Creator MCP (облако, аккаунт), Motion Canvas skill (дубль фермы),
+Three.js-пакеты (3D на 4 ГБ — узкое место), animation-principles (144
+навыка — тяжело), motion-skills (рекламная воронка), Math-To-Manim (платные
+API), инструменты Krita/Synfig/OpenToonz (нет годных для агента),
+mcp-drawthings (только txt2img/img2img; сам Draw Things стоит проверить как
+хост живописи на маке), сообщественные ComfyUI MCP (архив/GUI).
+
 ## Что добавить к своей ферме
 
 Своя ферма повторяет подход HyperFrames/Remotion (HTML → кадры → ffmpeg),
