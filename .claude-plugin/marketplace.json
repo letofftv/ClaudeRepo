@@ -1,0 +1,15 @@
+{
+  "name": "clauderepo",
+  "description": "Пакеты из песочницы находок: проверенные навыки для фабрики и студии.",
+  "owner": {
+    "name": "letofftv"
+  },
+  "plugins": [
+    {
+      "name": "music-studio",
+      "source": "./packs/music-studio",
+      "description": "Запись вокала под минусовку, сведение, мастеринг, замеры громкости и управление Ableton через MCP — навыки на основе уроков ведущих инженеров.",
+      "category": "productivity"
+    }
+  ]
+}
