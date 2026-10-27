@@ -76,6 +76,10 @@ MFreeFXBundle, Softube Saturation Knob, Graillon 3 (бесплатная ред�
 
 ## Встроенное в Ableton Live 12 (редакции)
 
+**У владельца — Suite (2026-10-27):** доступно всё ниже, включая Roar,
+Hybrid Reverb, Stem Separation и Max for Live.
+
+
 - **Все редакции:** Auto Shift (коррекция высоты, гармонии по MIDI),
   Drift, Expressive Chords, EQ Eight, Compressor, Limiter, Utility, Tuner,
   Auto Filter, MIDI-инструменты и учёт тональности.

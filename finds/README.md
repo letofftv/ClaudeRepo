@@ -59,7 +59,7 @@ large-v3 на видеокарте, сетка долей, маски Apple Visi
 | Находка | Для чего | Статус | Карточка |
 |---|---|---|---|
 | music-studio (свой пакет) | запись вокала, сведение под минусовку, мастеринг, замеры, Ableton | **взять** | [packs/music-studio](../packs/music-studio/README.md) |
-| Producer Pal | MCP для Ableton Live 12.3+ Suite (Max for Live) | **попробовать** | [producer-pal.md](producer-pal.md) |
+| Producer Pal | MCP для Ableton Live 12.3+ Suite (Max for Live) — у владельца Suite | **попробовать** (первым) | [producer-pal.md](producer-pal.md) |
 | LiveBridge | MCP для Ableton с упором на сведение и мастеринг | **попробовать** (осторожно) | [livebridge.md](livebridge.md) |
 | python-audio-separator | стемы и вокал, модели с GitHub | **попробовать** | [audio-separator.md](audio-separator.md) |
 | Matchering 2.0 | мастеринг по референсу | **попробовать** | [matchering.md](matchering.md) |
