@@ -31,7 +31,7 @@
 # Live 12.3+ с Max for Live; Producer_Pal.amxd из релизов — на MIDI-дорожку
 claude mcp add producer-pal -- npx producer-pal@<версия> --tools core,clip,track
 ```
-Подробно — навык `ableton-control` пакета `packs/music-studio`.
+Подробно — навык `ableton-control` пакета `audio/packs/music-studio`.
 
 ## Что проверено
 

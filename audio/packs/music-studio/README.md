@@ -4,7 +4,7 @@
 громкости и работы с Ableton Live через MCP. Основа — публичные уроки
 ведущих инженеров сведения и мастеринга, обзор MCP-серверов для DAW,
 плагинов и открытых инструментов (2026-10-27). Подробности и источники —
-[`research/2026-10-27-audio-production.md`](../../research/2026-10-27-audio-production.md).
+[`audio/research/2026-10-27-audio-production.md`](../../research/2026-10-27-audio-production.md).
 
 ## Что внутри
 

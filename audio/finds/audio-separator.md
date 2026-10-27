@@ -29,7 +29,7 @@
 
 ## Как подключить
 
-По навыку `audio-toolkit` пакета `packs/music-studio`; список моделей —
+По навыку `audio-toolkit` пакета `audio/packs/music-studio`; список моделей —
 `audio-separator --list_models --list_format=json`.
 
 ## Что проверено

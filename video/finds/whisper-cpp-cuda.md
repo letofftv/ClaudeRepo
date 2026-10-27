@@ -22,7 +22,7 @@
   CUDA 12.4 и 11.8.
 - Сравнения turbo / medium на русском не найдено — сделать A/B.
 - Альтернативы: Parakeet TDT 0.6B v3 (встроен в HyperFrames, CPU, русский) и
-  GigaAM (`finds/gigaam.md`).
+  GigaAM (`video/finds/gigaam.md`).
 
 ## Как подключить
 

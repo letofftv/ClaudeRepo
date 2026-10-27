@@ -6,7 +6,7 @@ description: Управление Ableton Live 12 из Claude через MCP —
 # Ableton Live через MCP
 
 Состояние на 2026-10-27. Подробное сравнение серверов —
-`research/2026-10-27-audio-production.md` в репозитории ClaudeRepo.
+`audio/research/2026-10-27-audio-production.md` в репозитории ClaudeRepo.
 
 ## 1. Выбор сервера
 

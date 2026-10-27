@@ -33,7 +33,7 @@
 
 ## Как подключить
 
-Пункт 2 плана в `research/2026-10-26-local-voice-and-video.md`: поднять
+Пункт 2 плана в `video/research/2026-10-26-local-voice-and-video.md`: поднять
 `tts-server` (CUDA 12), клонировать русский голос, на который есть права,
 озвучить тестовый абзац, сравнить с qwentts.cpp и Silero.
 

@@ -25,7 +25,7 @@
 
 ## Как подключить
 
-Пример — в навыке `audio-toolkit` пакета `packs/music-studio`.
+Пример — в навыке `audio-toolkit` пакета `audio/packs/music-studio`.
 
 ## Что проверено
 

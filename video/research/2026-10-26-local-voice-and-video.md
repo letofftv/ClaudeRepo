@@ -54,7 +54,7 @@
   ИИ-видео. Апгрейд до 32 ГБ полезен, но не срочен.
 - **Windows сейчас, Ubuntu потом:** на Ubuntu нужен проприетарный драйвер
   580, и нет подкачки видеопамяти в ОЗУ — то, что «влезало» на Windows, на
-  Linux может падать. Подробно: `research/2026-10-26-ubuntu-gpu-setup.md`.
+  Linux может падать. Подробно: `common/research/2026-10-26-ubuntu-gpu-setup.md`.
 
 Пометки «лицензия!» и «отклонено (лицензия)» ниже относятся к коммерческому
 использованию — если монетизация начнётся, они снова в силе.
@@ -96,23 +96,23 @@
    образца. MIT; веса по странице порта — Apache-2.0 [стр], но в других
    источниках встречается CC-BY-NC [поиск] — проверить на Hugging Face.
    Поддержка Pascal на странице не названа; код общий с qwentts.cpp — вероятно,
-   та же сборка, проверить. Карточка: `finds/omnivoice-cpp.md`.
+   та же сборка, проверить. Карточка: `video/finds/omnivoice-cpp.md`.
 2. **qwentts.cpp** — C++/GGML-порт Qwen3-TTS. Образ `:cuda12` **прямо собран под
    Pascal (sm_61)** [стр: docs/DOCKER.md, CMakeLists.txt]. MIT, веса Qwen3-TTS —
    Apache-2.0. Русский есть, но готовых русских голосов нет — нужно
    клонировать; по отзывам русский у Qwen3-TTS слабее Silero и ESpeech [поиск].
-   Карточка: `finds/qwentts-cpp.md`.
+   Карточка: `video/finds/qwentts-cpp.md`.
 
 **CPU — Silero TTS v5:** по отзывам лучший локальный русский, быстрый на CPU,
 ударения и омографы. **Основные модели (`v5_ru`) — CC-NC-BY,
 некоммерческие** [стр]; базовые `v5_cis_base` — MIT, с отдельным MIT-пакетом
 ударений `silero-stress` [стр]. Готового OpenAI-совместимого сервера нет.
-Карточка: `finds/silero-tts.md`.
+Карточка: `video/finds/silero-tts.md`.
 
 **Качество и клонирование офлайн — ESpeech-TTS-1** (русская доработка F5-TTS):
 по обзорам «отличное» качество [поиск]; лицензия вариант SFT-256K отмечена как
 Apache-2.0 [поиск], у других русских доработок F5 — CC-BY-NC. Требует PyTorch
-(cu126). Карточка: `finds/espeech-tts.md`.
+(cu126). Карточка: `video/finds/espeech-tts.md`.
 
 **Запасной на CPU — Speaches + Piper:** готовый OpenAI-совместимый сервер
 (MIT, образы CPU и CUDA 12.6) с русскими голосами Piper (irina, denis, dmitri,
@@ -186,7 +186,7 @@ OVS_TTS_FORMAT=wav
 - **stable-diffusion.cpp** — без PyTorch: CUDA, Vulkan, CPU; GGUF; поддерживает
   SD1.5/SDXL/FLUX, Wan 2.1/2.2, LTX; разгрузка в ОЗУ и тайлинг VAE [стр].
   Переживёт уход PyTorch с Pascal. **Пробовать первым.** Карточка:
-  `finds/stable-diffusion-cpp.md`.
+  `animation/finds/stable-diffusion-cpp.md`.
 - ComfyUI (сборка cu126) с флагами `--lowvram`, `--force-fp32` (SD1.5),
   `--use-split-cross-attention` (SDXL/FLUX) [стр]; GGUF-узлы для DiT-моделей.
 

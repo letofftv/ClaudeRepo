@@ -18,7 +18,7 @@
 - Если что-то расходится с реальным состоянием фермы — права ферма; отметьте
   это в разделе «Ответ для песочницы».
 - Ничего не устанавливать без подтверждения владельца. Навыки агентов перед
-  установкой — через сканер SkillSpector (см. `finds/skillspector.md`).
+  установкой — через сканер SkillSpector (см. `common/finds/skillspector.md`).
 - Ролики не монетизируются — модели с некоммерческими лицензиями допустимы.
 
 ## 1. Задача
@@ -196,9 +196,9 @@ SDXL) или внешние сервисы / аренда GPU (отдельно�
 Файлы песочницы (репозиторий публичный, читаются напрямую):
 
 - Контекст фабрики и правила: https://raw.githubusercontent.com/letofftv/ClaudeRepo/main/CLAUDE.md
-- Исследование озвучки, субтитров и ИИ-видео на 1050 Ti: https://raw.githubusercontent.com/letofftv/ClaudeRepo/main/research/2026-10-26-local-voice-and-video.md
-- Переезд на Ubuntu с 1050 Ti: https://raw.githubusercontent.com/letofftv/ClaudeRepo/main/research/2026-10-26-ubuntu-gpu-setup.md
-- Все находки со статусами: https://raw.githubusercontent.com/letofftv/ClaudeRepo/main/finds/README.md
+- Исследование озвучки, субтитров и ИИ-видео на 1050 Ti: https://raw.githubusercontent.com/letofftv/ClaudeRepo/main/video/research/2026-10-26-local-voice-and-video.md
+- Переезд на Ubuntu с 1050 Ti: https://raw.githubusercontent.com/letofftv/ClaudeRepo/main/common/research/2026-10-26-ubuntu-gpu-setup.md
+- Карта репозитория и находки по направлениям: https://raw.githubusercontent.com/letofftv/ClaudeRepo/main/README.md (анимация — animation/README.md)
 
 Источники по инструментам схемы:
 

@@ -88,4 +88,4 @@ Hybrid Reverb, Stem Separation и Max for Live.
   Resonator/Time, **Stem Separation** (12.3+), Max for Live (нужен Producer Pal).
 - Live 12.4.5 — актуальная (2026-08). ARA нет.
 
-Источники — в `research/2026-10-27-audio-production.md`.
+Источники — в `audio/research/2026-10-27-audio-production.md`.
