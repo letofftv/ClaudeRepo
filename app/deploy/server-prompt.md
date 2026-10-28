@@ -114,7 +114,8 @@ cd ~/ClaudeRepo/app && python3 -m unittest discover -s tests
   - `max_parallel_jobs: 1`, пока видеокарту делят ферма и пульт;
   - `bind` — по итогам шага 1;
   - `services` — проверки из шага 1, `disks` — HDD, если он смонтирован
-    отдельно (примеры — в `app/README.md`, раздел «Панель «Сервер»»).
+    отдельно, `hide_disks` — диски, которые не нужны на панели и в тревогах
+    (примеры — в `app/README.md`, раздел «Панель «Сервер»»).
 - Токен: `mkdir -p ~/.config/hub && printf 'HUB_TOKEN=%s\n' "$(python3 -c
   'import secrets; print(secrets.token_urlsafe(24))')" > ~/.config/hub/env &&
   chmod 600 ~/.config/hub/env`.
@@ -122,8 +123,10 @@ cd ~/ClaudeRepo/app && python3 -m unittest discover -s tests
   - впиши реальные пути и адреса из шага 1, лишнее удали;
   - если Whisper не whisper.cpp — оберни команду движка в
     `app/tools/whisper_subs.py` (пример — в `tools.local.example.json`).
-    Обёртка сама добавит флаг языка, а при «auto» не передаст его. SRT и
-    VTT она сделает из JSON, который движок оставит в `{out}`. Если
+    Обёртка сама добавит флаг языка, а при «auto» не передаст его. Если
+    движок без флага не определяет язык сам, нужен `--auto-lang=auto`, и
+    движок должен понимать `--lang auto`. SRT и VTT обёртка сделает из
+    JSON, который движок оставит в `{out}`. Если
     Whisper доступен только как HTTP-сервис, выключи инструмент
     (`"enabled": false`) и опиши интерфейс сервиса в отчёте — обёртку
     сделают в репозитории;

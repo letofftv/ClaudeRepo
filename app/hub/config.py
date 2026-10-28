@@ -26,6 +26,7 @@ DEFAULTS = {
     "services_interval": 15,    # seconds between service/container checks
     "services": [],             # checks: {"name", "tcp"|"http"|"systemd"|"docker"|"process": ...}
     "disks": [],                # extra mount points to watch besides / and the work folder
+    "hide_disks": [],           # mount points left out of the panel and alerts (an old disk nobody uses)
     "alerts": {},               # threshold overrides, see hub/metrics.py DEFAULT_THRESHOLDS
     "links": [],                # other panels shown on the Server page: {"title", "url"} (Beszel, Dozzle…)
 }

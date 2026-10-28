@@ -130,7 +130,7 @@ export function render(main, params, query) {
     mount(hero, statusHero(m, { link: false }));
     mount(alerts, (m.alerts || []).map(alertItem));
     mount(wsl, m.wsl ? el("details", { class: "card" }, el("summary", {}, "Особенности WSL2: что показывают цифры"),
-      el("p", { class: "secondary small mt-2" }, "Пульт работает внутри WSL2. Память, подкачка и диск «/» — это виртуальная машина: её лимит задаётся в .wslconfig, а «/» показывает размер виртуального диска, а не реальное место. Настоящее свободное место Windows — на /mnt/c и /mnt/d. Загрузка видеокарты и список процессов на ней в WSL могут быть недоступны, температура процессора не видна.")) : null);
+      el("p", { class: "secondary small mt-2" }, "Пульт работает внутри WSL2. Память, подкачка и диск «/» — это виртуальная машина: её лимит задаётся в .wslconfig, а «/» показывает размер виртуального диска, а не реальное место. Настоящее свободное место Windows — на /mnt/c и /mnt/d. В WSL nvidia-smi не отдаёт питание и память по процессам видеокарты, имена процессов пульт берёт из /proc; температура процессора не видна.")) : null);
     const hist = range === "15m" && series ? series : live.history;
     mount(tiles, resourceTiles(m, hist, { detailed: true }));
     mount(ready, readinessLine(m));
@@ -184,8 +184,8 @@ export function render(main, params, query) {
         ["Частота", g.clock_mhz === null ? "—" : `${fmt.num(g.clock_mhz, 0)}${g.clock_max_mhz ? ` из ${fmt.num(g.clock_max_mhz, 0)}` : ""} МГц`]]),
       el("h4", { class: "mt-4 mb-2" }, "Процессы на видеокарте"),
       procs.length
-        ? el("table", { class: "table" }, el("tbody", {}, procs.map((p) => el("tr", {}, el("td", {}, p.name), el("td", { class: "num" }, p.mem_mb === null ? "—" : `${fmt.num(p.mem_mb, 0)} МБ`)))))
-        : el("p", { class: "secondary small" }, m.wsl ? "В WSL2 список процессов видеокарты недоступен." : "Сейчас никто не использует видеокарту.")));
+        ? el("table", { class: "table" }, el("tbody", {}, procs.map((p) => el("tr", {}, el("td", {}, p.name), el("td", { class: "num" }, p.mem_mb === null ? "нет данных" : `${fmt.num(p.mem_mb, 0)} МБ`)))))
+        : el("p", { class: "secondary small" }, "Сейчас никто не использует видеокарту.")));
   }
 
   function renderDisks(m) {

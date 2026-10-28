@@ -45,6 +45,15 @@ class ParserTest(unittest.TestCase):
         self.assertEqual(g["temp_c"], 71.0)
         self.assertEqual(g["driver"], "580.95")
 
+    def test_gpu_processes_in_wsl(self):
+        me = Path(f"/proc/{os.getpid()}/comm").read_text().strip()
+        procs = metrics.parse_nvidia_processes(
+            f"{os.getpid()}, [Not Found], [N/A]\n999999999, [Not Found], [N/A]\n1234, /usr/bin/ffmpeg, 120\n5, /opt/my,app, 7\n")
+        self.assertEqual(procs[0], {"pid": os.getpid(), "name": me, "mem_mb": None})  # WSL: name from /proc
+        self.assertEqual(procs[1]["name"], "pid 999999999")  # not ours (e.g. outside WSL)
+        self.assertEqual(procs[2], {"pid": 1234, "name": "ffmpeg", "mem_mb": 120.0})
+        self.assertEqual(procs[3]["name"], "my,app")
+
     def test_proc_readers(self):
         self.assertTrue(metrics.cpu_times()[0][0] == "cpu")
         self.assertIn("MemTotal", metrics.meminfo())
@@ -172,6 +181,17 @@ class SamplerTest(unittest.TestCase):
             again = metrics.Sampler(settings)
             self.assertEqual(len(again.minute), len(saved["minute"]))
             again.pool.shutdown(wait=False)
+
+
+    def test_hidden_disks_leave_the_panel(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            settings = Settings({"workdir": tmp, "hide_disks": ["/"], "max_parallel_jobs": 1, "repo_root": str(APP.parent)})
+            sampler = metrics.Sampler(settings)
+            try:
+                self.assertNotIn("/", sampler.static["mounts"])
+                self.assertIn(tmp, sampler.static["mounts"])  # the work folder's disk always stays
+            finally:
+                sampler.pool.shutdown(wait=False)
 
 
 class JobProgressTest(unittest.TestCase):

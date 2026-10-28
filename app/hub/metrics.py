@@ -185,18 +185,29 @@ def nvidia(exe):
     return parse_nvidia_smi(out.stdout), None
 
 
+def parse_nvidia_processes(text):
+    """Compute processes on the card. In WSL nvidia-smi gives the pid with "[Not Found]" and no
+    memory; the pid is the same inside WSL, so the name comes from /proc/<pid>/comm."""
+    procs = []
+    for line in text.strip().splitlines():
+        parts = [p.strip() for p in line.split(",")]
+        if len(parts) < 3 or not parts[0].isdigit():
+            continue
+        pid = int(parts[0])
+        name = os.path.basename(",".join(parts[1:-1]))
+        if not name or name.startswith("["):
+            name = _read(f"/proc/{pid}/comm").strip() or f"pid {pid}"
+        procs.append({"pid": pid, "name": name, "mem_mb": _num(parts[-1])})
+    return procs
+
+
 def nvidia_processes(exe):
     try:
         out = subprocess.run([exe, "--query-compute-apps=pid,process_name,used_memory",
                               "--format=csv,noheader,nounits"], capture_output=True, text=True, timeout=5)
     except (OSError, subprocess.TimeoutExpired):
         return []
-    procs = []
-    for line in out.stdout.strip().splitlines():
-        parts = [p.strip() for p in line.split(",")]
-        if len(parts) == 3 and parts[0].isdigit():
-            procs.append({"pid": int(parts[0]), "name": os.path.basename(parts[1]), "mem_mb": _num(parts[2])})
-    return procs
+    return parse_nvidia_processes(out.stdout)
 
 
 def mount_points(extra):
@@ -413,6 +424,7 @@ class Sampler:
         self.thresholds = dict(DEFAULT_THRESHOLDS, **(settings.get("alerts") or {}))
         self.services_spec = settings.get("services") or []
         self.extra_disks = [settings.workdir] + list(settings.get("disks") or [])
+        hidden = {os.path.normpath(p) for p in settings.get("hide_disks") or []}
         self.fine = deque(maxlen=int(3600 / self.interval) + 2)
         self.minute = deque(maxlen=24 * 60 + 2)
         self.lock = threading.Lock()
@@ -430,7 +442,7 @@ class Sampler:
         self.nvidia_exe = shutil.which("nvidia-smi")
         self.static = {"host": platform.node(), "system": f"{platform.system()} {platform.release()}",
                        "python": platform.python_version(), "cpu_count": os.cpu_count() or 1, "wsl": is_wsl(),
-                       "mounts": mount_points(self.extra_disks)}
+                       "mounts": [m for m in mount_points(self.extra_disks) if os.path.normpath(m) not in hidden]}
         self.pool = ThreadPoolExecutor(max_workers=6)
         self._stop = threading.Event()
         self._thread = None

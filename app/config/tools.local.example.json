@@ -13,7 +13,7 @@
   "tools": [
     {
       "id": "whisper",
-      "_comment": "пример: faster-whisper в Docker вместо whisper.cpp. Обёртка добавит --lang <язык> сама, а при auto не добавит ничего; SRT и VTT сделает из JSON, который движок оставит в {out}. Папку пульта монтировать по тому же пути, чтобы пути внутри контейнера совпали.",
+      "_comment": "пример: faster-whisper в Docker вместо whisper.cpp. Обёртка добавит --lang <язык> сама, а при auto не добавит ничего; если без --lang движок берёт свой язык по умолчанию, а не определяет его, — добавить \"--auto-lang=auto\" перед \"--\", и при auto уйдёт --lang auto (движок должен его понимать). SRT и VTT обёртка сделает из JSON, который движок оставит в {out}. Папку пульта монтировать по тому же пути, чтобы пути внутри контейнера совпали.",
       "enabled": false,
       "requires": ["docker"],
       "command": ["{python}", "{repo}/app/tools/whisper_subs.py", "--out", "{out}", "--lang", "{lang}", "--lang-flag=--lang", "--",

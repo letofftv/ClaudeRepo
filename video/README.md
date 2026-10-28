@@ -61,7 +61,7 @@ MoviePy и editly (дублируют ферму), heygen-com/skills (облач
 | Playwright MCP (видео) | запись настоящих интерфейсов с курсором | **попробовать** | [playwright-mcp-video.md](finds/playwright-mcp-video.md) |
 | omnivoice.cpp | русская озвучка с клоном голоса на GPU | **попробовать** | [omnivoice-cpp.md](finds/omnivoice-cpp.md) |
 | Video2X | апскейл и интерполяция кадров на Vulkan | позже (после переезда на Ubuntu: в WSL нет Vulkan) | [video2x.md](finds/video2x.md) |
-| Piper | черновая русская озвучка на CPU без сервера; в пульте — `tts_piper` | **попробовать** (запасной) | [piper.md](finds/piper.md) |
+| Piper | черновая русская озвучка на CPU без сервера; в пульте — `tts_piper`, 18 с речи за 3,4 с | **взять** (черновики) | [piper.md](finds/piper.md) |
 | ESpeech-TTS-1 | качественный русский с клоном (F5-TTS) | **попробовать** (запасной) | [espeech-tts.md](finds/espeech-tts.md) |
 | GigaAM v3 | точное распознавание русского, если Whisper не устроит | позже | [gigaam.md](finds/gigaam.md) |
 | Orkas-VideoStudio | монтаж поверх HyperFrames — пересекается с фермой | позже (идеи) | [orkas-videostudio.md](finds/orkas-videostudio.md) |

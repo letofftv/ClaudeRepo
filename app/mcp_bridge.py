@@ -90,9 +90,9 @@ def summarize_metrics(m):
                  + (f" · подкачка {_n(swap.get('pct'), 0)} %" if swap.get("total") else ""))
     for g in m.get("gpus", []):
         free = (g.get("mem_total_mb") or 0) - (g.get("mem_used_mb") or 0)
+        power = f", питание {_n(g.get('power_w'), 0)} Вт" if g.get("power_w") is not None else ""
         lines.append(f"Видеокарта {g.get('name')}: загрузка {_n(g.get('util'), 0)} %, видеопамять {_n(g.get('mem_used_mb'), 0)} из "
-                     f"{_n(g.get('mem_total_mb'), 0)} МБ (свободно {free:.0f} МБ), {_n(g.get('temp_c'), 0)} °C, "
-                     f"питание {_n(g.get('power_w'), 0)} Вт")
+                     f"{_n(g.get('mem_total_mb'), 0)} МБ (свободно {free:.0f} МБ), {_n(g.get('temp_c'), 0)} °C{power}")
     if not m.get("gpus"):
         lines.append("Видеокарта не видна: " + (m.get("gpu_error") or "nvidia-smi не найден"))
     disks = m.get("disks") or []
