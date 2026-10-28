@@ -28,6 +28,44 @@ Code: методика, документация библиотек, навиг�
 
 Для сравнения: отклонённый ECC — ~30 тыс. токенов и 27 хуков.
 
+## Интерфейсы: свой пакет ui-studio (2026-10-28)
+
+**[ui-studio](packs/ui-studio/README.md)** — «создатель интерфейсов», свой
+плагин. Шесть навыков проходят цикл: сценарии → экраны → токены → сборка →
+живые панели → проверка. В комплекте:
+- генератор токенов (OKLCH + WCAG);
+- набор компонентов без сборки (uPlot, Lucide);
+- `ui_check.mjs` — снимки и проверки в Chromium на телефоне и компьютере в
+  обеих темах.
+
+На нём собран интерфейс пульта 0.3. Исследование —
+[research/2026-10-28-ui-tools.md](research/2026-10-28-ui-tools.md).
+
+```
+claude plugin marketplace add letofftv/ClaudeRepo
+claude plugin install ui-studio@clauderepo
+```
+
+| Находка | Для чего | Статус |
+|---|---|---|
+| [uPlot](finds/uplot.md) | графики временных рядов, CSP-чистый, 21 КБ | **взять** (в наборе) |
+| [Lucide](finds/lucide-icons.md) | иконки одного стиля, спрайт из нужных | **взять** (в наборе) |
+| [axe-core](finds/axe-core.md) | полный аудит доступности в проверках | **взять** (для тестов) |
+| [humane-agentic-design](finds/humane-agentic-design.md) | ловушки JS, договор о ревью, русская типографика | **взять** части (перенесены) |
+| [web-interface-guidelines](finds/web-interface-guidelines.md) | ~100 проверяемых правил | **взять** как источник |
+| [agent-browser](finds/agent-browser.md) | просмотр страниц агентом, axe, сравнение снимков | **попробовать** (против Playwright CLI) |
+| [taste-skill](https://github.com/Leonxlnx/taste-skill) (`app-screens.md`) | правила дашбордов: один вопрос — один вывод | источник |
+| [design-review](https://github.com/OneRedOak/claude-code-workflows) | фазы ревью и важность находок | источник |
+| [impeccable](https://github.com/pbakaus/impeccable) | только CLI `detect`, один раз; плагин ставит хуки и телеметрию | позже |
+| [ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill) | пересекается с ui-studio, срабатывает на любую задачу UI | позже |
+
+**Отклонено:**
+- superdesign — облачный вход, HTML уходит в сервис;
+- 21st/Magic MCP — платный ключ;
+- Figma MCP — 6 вызовов в месяц, оплата из России невозможна;
+- shadcn MCP, onlook, ui-skills — React и Tailwind;
+- Playwright MCP — для проверок лучше CLI.
+
 ## Лучшее: навыки, плагины, MCP и репозитории
 
 | # | Находка | Тип | Для чего | Статус |
@@ -40,7 +78,7 @@ Code: методика, документация библиотек, навиг�
 | 6 | Best practices + встроенные команды | официальный гайд | методика без установки | **взять** |
 | 7 | [Playwright CLI](finds/playwright-cli.md) | CLI + навыки | проверка своих сцен и интерфейсов | **попробовать** |
 | 8 | [security-guidance](finds/security-guidance.md) | плагин (официальный) | безопасность ботов и сервисов; ревью на остановке выключить | **попробовать** |
-| 9 | [frontend-design](https://github.com/anthropics/claude-plugins-official) | 1 навык (официальный) | интерфейсы и HTML-сцены без шаблонного вида | **попробовать** |
+| 9 | [frontend-design](https://github.com/anthropics/claude-plugins-official) | 1 навык (официальный) | признаки «шаблонного вида» и цикл критики по снимкам — перенесены в ui-studio; рядом с ним не ставить | источник |
 | 10 | [Telegram-канал](../productivity/finds/telegram-channel.md) | плагин-канал | управлять сессией на маке из Telegram | **попробовать** |
 | 11 | [ccusage](https://github.com/ryoppippi/ccusage) | CLI | отчёты по токенам из локальных логов (`--offline`) | **попробовать** |
 | 12 | [anthropics/skills](https://github.com/anthropics/skills) | примеры навыков | спецификация и шаблон навыков | позже (источник) |

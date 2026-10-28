@@ -4,8 +4,10 @@ import hashlib
 import hmac
 import json
 import mimetypes
+import signal
 import sys
 import time
+from email.utils import formatdate, parsedate_to_datetime
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -15,12 +17,21 @@ from . import __version__
 from .catalog import build_catalog
 from .config import APP_DIR, load_settings
 from .jobs import JobManager
+from .metrics import Sampler
 from .sysinfo import repo_info, update_status
 from .sysinfo import status as sys_status
 from .tools import ParamError, load_tools, public_tool, safe_filename
 
 STATIC_DIR = APP_DIR / "static"
 CHUNK = 1024 * 1024
+# Pinned types: on Windows the registry can map .js to text/plain, which breaks ES modules under nosniff.
+STATIC_TYPES = {".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
+                ".mjs": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
+                ".svg": "image/svg+xml", ".json": "application/json; charset=utf-8",
+                ".webmanifest": "application/manifest+json", ".png": "image/png", ".ico": "image/x-icon",
+                ".txt": "text/plain; charset=utf-8", ".woff2": "font/woff2"}
+PAGE_CSP = ("default-src 'self'; img-src 'self' blob: data:; media-src 'self' blob:; style-src 'self'; "
+            "script-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
 LINK_TTL = 15 * 60  # seconds a signed download link stays valid
 INLINE_TYPES = ("image/", "audio/", "video/", "text/plain")
 
@@ -34,8 +45,14 @@ class Hub:
         self.tools = tools
         self.variables = variables
         self.jobs = JobManager(settings, tools, variables)
+        self.metrics = Sampler(settings, jobs=self.jobs, update_reader=lambda: update_status(settings.workdir))
+        if settings.get("metrics_enabled", True):
+            self.metrics.start()
         self._catalog = None
         self._catalog_time = 0
+
+    def close(self):
+        self.metrics.stop()
 
     def catalog(self, refresh=False):
         if refresh or self._catalog is None or time.time() - self._catalog_time > 300:
@@ -59,11 +76,11 @@ class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):  # quieter log without tokens or bodies
         sys.stderr.write("%s %s\n" % (self.command, self.path.split("?")[0]))
 
-    def _headers(self, code, ctype, length=None, extra=None):
+    def _headers(self, code, ctype, length=None, extra=None, cache="no-store"):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("X-Content-Type-Options", "nosniff")
-        self.send_header("Cache-Control", "no-store")
+        self.send_header("Cache-Control", cache)
         if length is not None:
             self.send_header("Content-Length", str(length))
         for k, v in (extra or {}).items():
@@ -164,15 +181,25 @@ class Handler(BaseHTTPRequestHandler):
         path = (STATIC_DIR / rel).resolve()
         if STATIC_DIR.resolve() not in path.parents or not path.is_file():
             return self._error(404, "не найдено")
+        mtime = int(path.stat().st_mtime)
+        last_modified = formatdate(mtime, usegmt=True)
+        extra = {"Content-Security-Policy": PAGE_CSP, "Referrer-Policy": "no-referrer",
+                 "X-Frame-Options": "DENY", "Last-Modified": last_modified}
+        since = self.headers.get("If-Modified-Since")
+        if since:
+            try:
+                if int(parsedate_to_datetime(since).timestamp()) >= mtime:
+                    self.send_response(304)
+                    for k, v in extra.items():
+                        self.send_header(k, v)
+                    self.send_header("Cache-Control", "no-cache")
+                    self.end_headers()
+                    return None
+            except (TypeError, ValueError):
+                pass
         data = path.read_bytes()
-        ctype = mimetypes.guess_type(str(path))[0] or "application/octet-stream"
-        if ctype.startswith("text/") or ctype in ("application/javascript",):
-            ctype += "; charset=utf-8"
-        self._headers(200, ctype, len(data), {
-            "Content-Security-Policy": "default-src 'self'; img-src 'self' blob: data:; "
-                                       "media-src 'self' blob:; style-src 'self'; script-src 'self'",
-            "Referrer-Policy": "no-referrer",
-        })
+        ctype = STATIC_TYPES.get(path.suffix.lower()) or mimetypes.guess_type(str(path))[0] or "application/octet-stream"
+        self._headers(200, ctype, len(data), extra, cache="no-cache")  # revalidate: updates show up at once
         self.wfile.write(data)
 
     # --- routing -----------------------------------------------------------
@@ -206,7 +233,24 @@ class Handler(BaseHTTPRequestHandler):
             info["version"] = __version__
             info["repo"] = repo_info(hub.settings.repo_root)
             info["update"] = update_status(hub.settings.workdir)
+            snap = hub.metrics.current()
+            info["health"] = {"status": snap.get("status"), "alerts": snap.get("alerts", [])}
             return self._json(info)
+        if path == "/api/metrics":
+            snap = dict(hub.metrics.current())
+            snap["jobs"] = hub.jobs.counts()
+            snap["version"] = __version__
+            snap["repo"] = repo_info(hub.settings.repo_root)
+            snap["update"] = update_status(hub.settings.workdir)
+            snap["now"] = time.time()
+            return self._json(snap)
+        if path == "/api/ui":  # what the interface needs to know about this installation
+            return self._json({"version": __version__, "interval": hub.settings.get("metrics_interval", 5),
+                               "links": hub.settings.get("links") or []})
+        if path == "/api/metrics/history":
+            return self._json(hub.metrics.history(query.get("range", ["1h"])[0]))
+        if path == "/api/jobs/usage":
+            return self._json(hub.jobs.usage())
         if path == "/api/tools":
             return self._json([public_tool(t, hub.variables) for t in hub.tools])
         if path == "/api/jobs":
@@ -258,6 +302,14 @@ class Handler(BaseHTTPRequestHandler):
         if path.startswith("/api/jobs/") and path.endswith("/cancel"):
             ok = self.hub.jobs.cancel(path.split("/")[3])
             return self._json({"cancelled": ok})
+        if path == "/api/jobs/cleanup":
+            try:
+                days = float(body.get("older_than_days", 30))
+            except (TypeError, ValueError):
+                return self._error(400, "older_than_days: нужно число")
+            if days < 1:
+                return self._error(400, "older_than_days: не меньше 1 дня")
+            return self._json({"deleted": self.hub.jobs.cleanup(days)})
         return self._error(404, "не найдено")
 
     def do_PUT(self):
@@ -287,8 +339,17 @@ class Handler(BaseHTTPRequestHandler):
 
     def do_DELETE(self):
         path = urlparse(self.path).path
-        if not path.startswith("/api/files/") or not self._authorized():
+        if not path.startswith("/api/") or not self._authorized():
             return self._error(401, "нужен токен")
+        if path.startswith("/api/jobs/"):
+            job_id = path.split("/")[3]
+            if self.hub.jobs.get(job_id) is None:
+                return self._error(404, "нет такой задачи")
+            if not self.hub.jobs.delete(job_id):
+                return self._error(409, "задача ещё идёт — сначала отмените её")
+            return self._json({"deleted": job_id})
+        if not path.startswith("/api/files/"):
+            return self._error(404, "не найдено")
         target = Path(self.hub.settings.workdir) / "inputs" / safe_filename(unquote(path[len("/api/files/"):]))
         if not target.is_file():
             return self._error(404, "файл не найден")
@@ -318,11 +379,15 @@ def main(argv=None):
         print(f"HUB_TOKEN не задан — временный токен на этот запуск: {settings.token}")
     avail = sum(public_tool(t, hub.variables)["available"] for t in hub.tools)
     print(f"Инструментов доступно: {avail} из {len(hub.tools)}")
+    def _terminate(signum, frame):  # systemd stops with SIGTERM: save history on the way out
+        raise KeyboardInterrupt
+    signal.signal(signal.SIGTERM, _terminate)
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         pass
     finally:
+        hub.close()
         server.server_close()
 
 

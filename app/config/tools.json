@@ -13,41 +13,150 @@
       "title": "Замер громкости",
       "group": "audio",
       "description": "LUFS, true peak, PLR, LRA и выводы по-русски (скрипт пакета music-studio). Роль: mix — микс перед мастерингом, beat — минусовка, master — готовый мастер.",
-      "command": ["{python}", "{repo}/audio/packs/music-studio/skills/audio-measure/scripts/loudness_report.py", "{input}", "--role", "{role}", "--target", "{target}", "--tp", "{tp}"],
-      "params": [
-        {"name": "input", "type": "file", "label": "Аудио или видео", "required": true},
-        {"name": "role", "type": "choice", "label": "Роль", "choices": ["master", "mix", "beat"], "default": "master"},
-        {"name": "target", "type": "number", "label": "Цель, LUFS", "default": -14, "min": -30, "max": -5},
-        {"name": "tp", "type": "number", "label": "Предел true peak, dBTP", "default": -1, "min": -6, "max": 0}
+      "command": [
+        "{python}",
+        "{repo}/audio/packs/music-studio/skills/audio-measure/scripts/loudness_report.py",
+        "{input}",
+        "--role",
+        "{role}",
+        "--target",
+        "{target}",
+        "--tp",
+        "{tp}",
+        "--json-out",
+        "{out}/report.json"
       ],
-      "requires": ["ffmpeg"],
-      "timeout": 900
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Аудио или видео",
+          "required": true,
+          "accept": [
+            "audio",
+            "video"
+          ]
+        },
+        {
+          "name": "role",
+          "type": "choice",
+          "label": "Роль",
+          "choices": [
+            "master",
+            "mix",
+            "beat"
+          ],
+          "default": "master"
+        },
+        {
+          "name": "target",
+          "type": "number",
+          "label": "Цель, LUFS",
+          "default": -14,
+          "min": -30,
+          "max": -5
+        },
+        {
+          "name": "tp",
+          "type": "number",
+          "label": "Предел true peak, dBTP",
+          "default": -1,
+          "min": -6,
+          "max": 0
+        }
+      ],
+      "requires": [
+        "ffmpeg"
+      ],
+      "timeout": 900,
+      "report": "loudness"
     },
     {
       "id": "mix_compare",
       "title": "Микс против референса",
       "group": "audio",
       "description": "Громкость, тональный баланс в 6 полосах и ширина стерео относительно референса.",
-      "command": ["{python}", "{repo}/audio/packs/music-studio/skills/audio-measure/scripts/mix_compare.py", "{mix}", "{reference}"],
-      "params": [
-        {"name": "mix", "type": "file", "label": "Микс", "required": true},
-        {"name": "reference", "type": "file", "label": "Референс", "required": true}
+      "command": [
+        "{python}",
+        "{repo}/audio/packs/music-studio/skills/audio-measure/scripts/mix_compare.py",
+        "{mix}",
+        "{reference}",
+        "--json-out",
+        "{out}/report.json"
       ],
-      "requires": ["ffmpeg"],
-      "timeout": 1800
+      "params": [
+        {
+          "name": "mix",
+          "type": "file",
+          "label": "Микс",
+          "required": true,
+          "accept": [
+            "audio",
+            "video"
+          ]
+        },
+        {
+          "name": "reference",
+          "type": "file",
+          "label": "Референс",
+          "required": true,
+          "accept": [
+            "audio",
+            "video"
+          ]
+        }
+      ],
+      "requires": [
+        "ffmpeg"
+      ],
+      "timeout": 1800,
+      "report": "mix_compare"
     },
     {
       "id": "loudnorm",
       "title": "Нормализация громкости (2 прохода)",
       "group": "audio",
       "description": "Линейная подгонка громкости к цели, WAV 24 бит. Если цель недостижима без лимитера — предупредит.",
-      "command": ["{python}", "{repo}/audio/packs/music-studio/skills/audio-measure/scripts/loudnorm_2pass.py", "{input}", "{out}/normalized.wav", "--target", "{target}", "--tp", "{tp}"],
-      "params": [
-        {"name": "input", "type": "file", "label": "Файл", "required": true},
-        {"name": "target", "type": "number", "label": "Цель, LUFS", "default": -14, "min": -30, "max": -5},
-        {"name": "tp", "type": "number", "label": "Предел true peak, dBTP", "default": -1, "min": -6, "max": 0}
+      "command": [
+        "{python}",
+        "{repo}/audio/packs/music-studio/skills/audio-measure/scripts/loudnorm_2pass.py",
+        "{input}",
+        "{out}/normalized.wav",
+        "--target",
+        "{target}",
+        "--tp",
+        "{tp}"
       ],
-      "requires": ["ffmpeg"],
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Файл",
+          "required": true,
+          "accept": [
+            "audio"
+          ]
+        },
+        {
+          "name": "target",
+          "type": "number",
+          "label": "Цель, LUFS",
+          "default": -14,
+          "min": -30,
+          "max": -5
+        },
+        {
+          "name": "tp",
+          "type": "number",
+          "label": "Предел true peak, dBTP",
+          "default": -1,
+          "min": -6,
+          "max": 0
+        }
+      ],
+      "requires": [
+        "ffmpeg"
+      ],
       "timeout": 1800
     },
     {
@@ -55,9 +164,34 @@
       "title": "В WAV 48 кГц / 24 бит",
       "group": "audio",
       "description": "Конвертация аудио или звука из видео в WAV 48 кГц / 24 бит (формат проектов и фабрики).",
-      "command": ["ffmpeg", "-hide_banner", "-y", "-i", "{input}", "-vn", "-ar", "48000", "-c:a", "pcm_s24le", "{out}/audio.wav"],
-      "params": [{"name": "input", "type": "file", "label": "Аудио или видео", "required": true}],
-      "requires": ["ffmpeg"],
+      "command": [
+        "ffmpeg",
+        "-hide_banner",
+        "-y",
+        "-i",
+        "{input}",
+        "-vn",
+        "-ar",
+        "48000",
+        "-c:a",
+        "pcm_s24le",
+        "{out}/audio.wav"
+      ],
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Аудио или видео",
+          "required": true,
+          "accept": [
+            "audio",
+            "video"
+          ]
+        }
+      ],
+      "requires": [
+        "ffmpeg"
+      ],
       "timeout": 1800
     },
     {
@@ -65,9 +199,36 @@
       "title": "В WAV 16 кГц моно (для распознавания)",
       "group": "audio",
       "description": "Подготовка звука для Whisper и других распознавателей.",
-      "command": ["ffmpeg", "-hide_banner", "-y", "-i", "{input}", "-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", "{out}/speech16k.wav"],
-      "params": [{"name": "input", "type": "file", "label": "Аудио или видео", "required": true}],
-      "requires": ["ffmpeg"],
+      "command": [
+        "ffmpeg",
+        "-hide_banner",
+        "-y",
+        "-i",
+        "{input}",
+        "-vn",
+        "-ac",
+        "1",
+        "-ar",
+        "16000",
+        "-c:a",
+        "pcm_s16le",
+        "{out}/speech16k.wav"
+      ],
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Аудио или видео",
+          "required": true,
+          "accept": [
+            "audio",
+            "video"
+          ]
+        }
+      ],
+      "requires": [
+        "ffmpeg"
+      ],
       "timeout": 1800
     },
     {
@@ -75,13 +236,49 @@
       "title": "Поиск пауз",
       "group": "audio",
       "description": "Где в записи тишина (silence_start / silence_end в логе) — для монтажа записей экрана и вокала.",
-      "command": ["ffmpeg", "-hide_banner", "-nostats", "-i", "{input}", "-af", "silencedetect=noise={noise}dB:d={duration}", "-f", "null", "-"],
-      "params": [
-        {"name": "input", "type": "file", "label": "Аудио или видео", "required": true},
-        {"name": "noise", "type": "number", "label": "Порог тишины, дБ", "default": -35, "min": -80, "max": -10},
-        {"name": "duration", "type": "number", "label": "Мин. длина паузы, с", "default": 0.5, "min": 0.1, "max": 10}
+      "command": [
+        "ffmpeg",
+        "-hide_banner",
+        "-nostats",
+        "-i",
+        "{input}",
+        "-af",
+        "silencedetect=noise={noise}dB:d={duration}",
+        "-f",
+        "null",
+        "-"
       ],
-      "requires": ["ffmpeg"],
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Аудио или видео",
+          "required": true,
+          "accept": [
+            "audio",
+            "video"
+          ]
+        },
+        {
+          "name": "noise",
+          "type": "number",
+          "label": "Порог тишины, дБ",
+          "default": -35,
+          "min": -80,
+          "max": -10
+        },
+        {
+          "name": "duration",
+          "type": "number",
+          "label": "Мин. длина паузы, с",
+          "default": 0.5,
+          "min": 0.1,
+          "max": 10
+        }
+      ],
+      "requires": [
+        "ffmpeg"
+      ],
       "timeout": 1800
     },
     {
@@ -89,12 +286,51 @@
       "title": "Видео в H.264 (процессор)",
       "group": "video",
       "description": "MP4 H.264 + AAC, faststart — для публикации и превью. CRF: меньше — лучше качество.",
-      "command": ["ffmpeg", "-hide_banner", "-y", "-i", "{input}", "-c:v", "libx264", "-crf", "{crf}", "-preset", "medium", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "{out}/video.mp4"],
-      "params": [
-        {"name": "input", "type": "file", "label": "Видео", "required": true},
-        {"name": "crf", "type": "number", "label": "CRF", "default": 20, "min": 14, "max": 32, "integer": true}
+      "command": [
+        "ffmpeg",
+        "-hide_banner",
+        "-y",
+        "-i",
+        "{input}",
+        "-c:v",
+        "libx264",
+        "-crf",
+        "{crf}",
+        "-preset",
+        "medium",
+        "-pix_fmt",
+        "yuv420p",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "-movflags",
+        "+faststart",
+        "{out}/video.mp4"
       ],
-      "requires": ["ffmpeg"],
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Видео",
+          "required": true,
+          "accept": [
+            "video"
+          ]
+        },
+        {
+          "name": "crf",
+          "type": "number",
+          "label": "CRF",
+          "default": 20,
+          "min": 14,
+          "max": 32,
+          "integer": true
+        }
+      ],
+      "requires": [
+        "ffmpeg"
+      ],
       "timeout": 7200
     },
     {
@@ -102,12 +338,52 @@
       "title": "Видео в H.264 (видеокарта NVENC)",
       "group": "video",
       "description": "То же через аппаратный кодировщик GTX 1050 Ti — быстрее, чуть крупнее файл. CQ: меньше — лучше качество.",
-      "command": ["ffmpeg", "-hide_banner", "-y", "-i", "{input}", "-c:v", "h264_nvenc", "-preset", "p5", "-cq", "{cq}", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "-movflags", "+faststart", "{out}/video.mp4"],
-      "params": [
-        {"name": "input", "type": "file", "label": "Видео", "required": true},
-        {"name": "cq", "type": "number", "label": "CQ", "default": 21, "min": 14, "max": 35, "integer": true}
+      "command": [
+        "ffmpeg",
+        "-hide_banner",
+        "-y",
+        "-i",
+        "{input}",
+        "-c:v",
+        "h264_nvenc",
+        "-preset",
+        "p5",
+        "-cq",
+        "{cq}",
+        "-pix_fmt",
+        "yuv420p",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "-movflags",
+        "+faststart",
+        "{out}/video.mp4"
       ],
-      "requires": ["ffmpeg", "nvidia-smi"],
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Видео",
+          "required": true,
+          "accept": [
+            "video"
+          ]
+        },
+        {
+          "name": "cq",
+          "type": "number",
+          "label": "CQ",
+          "default": 21,
+          "min": 14,
+          "max": 35,
+          "integer": true
+        }
+      ],
+      "requires": [
+        "ffmpeg",
+        "nvidia-smi"
+      ],
       "timeout": 7200
     },
     {
@@ -115,12 +391,51 @@
       "title": "Кадрирование 9:16 (1080×1920)",
       "group": "video",
       "description": "Заполняет вертикальный кадр с обрезкой краёв — для шортсов и клипов.",
-      "command": ["ffmpeg", "-hide_banner", "-y", "-i", "{input}", "-vf", "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920", "-c:v", "libx264", "-crf", "{crf}", "-preset", "medium", "-pix_fmt", "yuv420p", "-c:a", "aac", "-b:a", "192k", "{out}/vertical.mp4"],
-      "params": [
-        {"name": "input", "type": "file", "label": "Видео", "required": true},
-        {"name": "crf", "type": "number", "label": "CRF", "default": 20, "min": 14, "max": 32, "integer": true}
+      "command": [
+        "ffmpeg",
+        "-hide_banner",
+        "-y",
+        "-i",
+        "{input}",
+        "-vf",
+        "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920",
+        "-c:v",
+        "libx264",
+        "-crf",
+        "{crf}",
+        "-preset",
+        "medium",
+        "-pix_fmt",
+        "yuv420p",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "192k",
+        "{out}/vertical.mp4"
       ],
-      "requires": ["ffmpeg"],
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Видео",
+          "required": true,
+          "accept": [
+            "video"
+          ]
+        },
+        {
+          "name": "crf",
+          "type": "number",
+          "label": "CRF",
+          "default": 20,
+          "min": 14,
+          "max": 32,
+          "integer": true
+        }
+      ],
+      "requires": [
+        "ffmpeg"
+      ],
       "timeout": 7200
     },
     {
@@ -128,13 +443,59 @@
       "title": "Вшить субтитры",
       "group": "video",
       "description": "Субтитры .srt или .ass поверх видео (для .srt — размер шрифта).",
-      "command": ["ffmpeg", "-hide_banner", "-y", "-i", "{input}", "-vf", "subtitles={subs}:force_style=Fontsize={font_size}", "-c:v", "libx264", "-crf", "20", "-preset", "medium", "-pix_fmt", "yuv420p", "-c:a", "copy", "{out}/subtitled.mp4"],
-      "params": [
-        {"name": "input", "type": "file", "label": "Видео", "required": true},
-        {"name": "subs", "type": "file", "label": "Субтитры .srt/.ass", "required": true, "filter_safe": true},
-        {"name": "font_size", "type": "number", "label": "Размер шрифта", "default": 18, "min": 8, "max": 120, "integer": true}
+      "command": [
+        "ffmpeg",
+        "-hide_banner",
+        "-y",
+        "-i",
+        "{input}",
+        "-vf",
+        "subtitles={subs}:force_style=Fontsize={font_size}",
+        "-c:v",
+        "libx264",
+        "-crf",
+        "20",
+        "-preset",
+        "medium",
+        "-pix_fmt",
+        "yuv420p",
+        "-c:a",
+        "copy",
+        "{out}/subtitled.mp4"
       ],
-      "requires": ["ffmpeg"],
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Видео",
+          "required": true,
+          "accept": [
+            "video"
+          ]
+        },
+        {
+          "name": "subs",
+          "type": "file",
+          "label": "Субтитры .srt/.ass",
+          "required": true,
+          "filter_safe": true,
+          "accept": [
+            "subtitles"
+          ]
+        },
+        {
+          "name": "font_size",
+          "type": "number",
+          "label": "Размер шрифта",
+          "default": 18,
+          "min": 8,
+          "max": 120,
+          "integer": true
+        }
+      ],
+      "requires": [
+        "ffmpeg"
+      ],
       "timeout": 7200
     },
     {
@@ -142,14 +503,62 @@
       "title": "Контактный лист",
       "group": "video",
       "description": "Сетка кадров из видео одной картинкой — чтобы быстро оценить ролик (и показать Claude через MCP).",
-      "command": ["ffmpeg", "-hide_banner", "-y", "-i", "{input}", "-vf", "fps=1/{every},scale=360:-1,tile={cols}x{rows}", "-frames:v", "1", "-q:v", "3", "-update", "1", "{out}/sheet.jpg"],
-      "params": [
-        {"name": "input", "type": "file", "label": "Видео", "required": true},
-        {"name": "every", "type": "number", "label": "Кадр каждые N секунд", "default": 5, "min": 0.2, "max": 600},
-        {"name": "cols", "type": "number", "label": "Колонок", "default": 4, "min": 1, "max": 8, "integer": true},
-        {"name": "rows", "type": "number", "label": "Строк", "default": 4, "min": 1, "max": 8, "integer": true}
+      "command": [
+        "ffmpeg",
+        "-hide_banner",
+        "-y",
+        "-i",
+        "{input}",
+        "-vf",
+        "fps=1/{every},scale=360:-1,tile={cols}x{rows}",
+        "-frames:v",
+        "1",
+        "-q:v",
+        "3",
+        "-update",
+        "1",
+        "{out}/sheet.jpg"
       ],
-      "requires": ["ffmpeg"],
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Видео",
+          "required": true,
+          "accept": [
+            "video"
+          ]
+        },
+        {
+          "name": "every",
+          "type": "number",
+          "label": "Кадр каждые N секунд",
+          "default": 5,
+          "min": 0.2,
+          "max": 600
+        },
+        {
+          "name": "cols",
+          "type": "number",
+          "label": "Колонок",
+          "default": 4,
+          "min": 1,
+          "max": 8,
+          "integer": true
+        },
+        {
+          "name": "rows",
+          "type": "number",
+          "label": "Строк",
+          "default": 4,
+          "min": 1,
+          "max": 8,
+          "integer": true
+        }
+      ],
+      "requires": [
+        "ffmpeg"
+      ],
       "timeout": 1800
     },
     {
@@ -157,12 +566,44 @@
       "title": "Кадр из видео",
       "group": "video",
       "description": "Один кадр в JPEG на заданной секунде — для обложки или проверки.",
-      "command": ["ffmpeg", "-hide_banner", "-y", "-ss", "{at}", "-i", "{input}", "-frames:v", "1", "-q:v", "2", "-update", "1", "{out}/frame.jpg"],
-      "params": [
-        {"name": "input", "type": "file", "label": "Видео", "required": true},
-        {"name": "at", "type": "number", "label": "Секунда", "default": 1, "min": 0, "max": 86400}
+      "command": [
+        "ffmpeg",
+        "-hide_banner",
+        "-y",
+        "-ss",
+        "{at}",
+        "-i",
+        "{input}",
+        "-frames:v",
+        "1",
+        "-q:v",
+        "2",
+        "-update",
+        "1",
+        "{out}/frame.jpg"
       ],
-      "requires": ["ffmpeg"],
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Видео",
+          "required": true,
+          "accept": [
+            "video"
+          ]
+        },
+        {
+          "name": "at",
+          "type": "number",
+          "label": "Секунда",
+          "default": 1,
+          "min": 0,
+          "max": 86400
+        }
+      ],
+      "requires": [
+        "ffmpeg"
+      ],
       "timeout": 600
     },
     {
@@ -170,13 +611,49 @@
       "title": "Вырезать фрагмент (без перекодирования)",
       "group": "video",
       "description": "Быстрая нарезка по времени (ЧЧ:ММ:СС или секунды); склейка по ключевым кадрам.",
-      "command": ["ffmpeg", "-hide_banner", "-y", "-ss", "{start}", "-to", "{end}", "-i", "{input}", "-c", "copy", "{out}/fragment.mov"],
-      "params": [
-        {"name": "input", "type": "file", "label": "Видео или аудио", "required": true},
-        {"name": "start", "type": "string", "label": "Начало", "default": "0", "pattern": "[0-9:.]{1,12}"},
-        {"name": "end", "type": "string", "label": "Конец", "required": true, "pattern": "[0-9:.]{1,12}"}
+      "command": [
+        "ffmpeg",
+        "-hide_banner",
+        "-y",
+        "-ss",
+        "{start}",
+        "-to",
+        "{end}",
+        "-i",
+        "{input}",
+        "-c",
+        "copy",
+        "{out}/fragment.mov"
       ],
-      "requires": ["ffmpeg"],
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Видео или аудио",
+          "required": true,
+          "accept": [
+            "video",
+            "audio"
+          ]
+        },
+        {
+          "name": "start",
+          "type": "string",
+          "label": "Начало",
+          "default": "0",
+          "pattern": "[0-9:.]{1,12}"
+        },
+        {
+          "name": "end",
+          "type": "string",
+          "label": "Конец",
+          "required": true,
+          "pattern": "[0-9:.]{1,12}"
+        }
+      ],
+      "requires": [
+        "ffmpeg"
+      ],
       "timeout": 1800
     },
     {
@@ -184,14 +661,59 @@
       "title": "GIF-превью",
       "group": "video",
       "description": "Короткий GIF с оптимальной палитрой — для заметок и переписки.",
-      "command": ["ffmpeg", "-hide_banner", "-y", "-ss", "{start}", "-t", "{duration}", "-i", "{input}", "-vf", "fps=12,scale={width}:-1:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse", "{out}/preview.gif"],
-      "params": [
-        {"name": "input", "type": "file", "label": "Видео", "required": true},
-        {"name": "start", "type": "number", "label": "Начало, с", "default": 0, "min": 0, "max": 86400},
-        {"name": "duration", "type": "number", "label": "Длина, с", "default": 4, "min": 0.5, "max": 30},
-        {"name": "width", "type": "number", "label": "Ширина, px", "default": 480, "min": 120, "max": 1080, "integer": true}
+      "command": [
+        "ffmpeg",
+        "-hide_banner",
+        "-y",
+        "-ss",
+        "{start}",
+        "-t",
+        "{duration}",
+        "-i",
+        "{input}",
+        "-vf",
+        "fps=12,scale={width}:-1:flags=lanczos,split[a][b];[a]palettegen[p];[b][p]paletteuse",
+        "{out}/preview.gif"
       ],
-      "requires": ["ffmpeg"],
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Видео",
+          "required": true,
+          "accept": [
+            "video"
+          ]
+        },
+        {
+          "name": "start",
+          "type": "number",
+          "label": "Начало, с",
+          "default": 0,
+          "min": 0,
+          "max": 86400
+        },
+        {
+          "name": "duration",
+          "type": "number",
+          "label": "Длина, с",
+          "default": 4,
+          "min": 0.5,
+          "max": 30
+        },
+        {
+          "name": "width",
+          "type": "number",
+          "label": "Ширина, px",
+          "default": 480,
+          "min": 120,
+          "max": 1080,
+          "integer": true
+        }
+      ],
+      "requires": [
+        "ffmpeg"
+      ],
       "timeout": 1800
     },
     {
@@ -199,12 +721,37 @@
       "title": "Вырезать тишину (auto-editor)",
       "group": "video",
       "description": "Убирает паузы из записи экрана или разговора. Без платного ключа — до 3200×1800.",
-      "command": ["auto-editor", "{input}", "--margin", "{margin}s", "-o", "{out}/cut.mp4"],
-      "params": [
-        {"name": "input", "type": "file", "label": "Видео", "required": true},
-        {"name": "margin", "type": "number", "label": "Запас вокруг речи, с", "default": 0.2, "min": 0, "max": 2}
+      "command": [
+        "auto-editor",
+        "{input}",
+        "--margin",
+        "{margin}s",
+        "-o",
+        "{out}/cut.mp4"
       ],
-      "requires": ["auto-editor"],
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Видео",
+          "required": true,
+          "accept": [
+            "video",
+            "audio"
+          ]
+        },
+        {
+          "name": "margin",
+          "type": "number",
+          "label": "Запас вокруг речи, с",
+          "default": 0.2,
+          "min": 0,
+          "max": 2
+        }
+      ],
+      "requires": [
+        "auto-editor"
+      ],
       "timeout": 7200
     },
     {
@@ -212,9 +759,29 @@
       "title": "Таймлайн для Premiere (auto-editor)",
       "group": "video",
       "description": "XML-таймлайн без пауз — открыть в Premiere и доработать.",
-      "command": ["auto-editor", "{input}", "--export", "premiere", "-o", "{out}/timeline.xml"],
-      "params": [{"name": "input", "type": "file", "label": "Видео", "required": true}],
-      "requires": ["auto-editor"],
+      "command": [
+        "auto-editor",
+        "{input}",
+        "--export",
+        "premiere",
+        "-o",
+        "{out}/timeline.xml"
+      ],
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Видео",
+          "required": true,
+          "accept": [
+            "video",
+            "audio"
+          ]
+        }
+      ],
+      "requires": [
+        "auto-editor"
+      ],
       "timeout": 7200
     },
     {
@@ -222,9 +789,32 @@
       "title": "Нарезка по сценам (PySceneDetect)",
       "group": "video",
       "description": "Список сцен и кадры-превью каждой сцены.",
-      "command": ["scenedetect", "-i", "{input}", "-o", "{out}", "detect-adaptive", "list-scenes", "save-images", "-n", "1"],
-      "params": [{"name": "input", "type": "file", "label": "Видео", "required": true}],
-      "requires": ["scenedetect"],
+      "command": [
+        "scenedetect",
+        "-i",
+        "{input}",
+        "-o",
+        "{out}",
+        "detect-adaptive",
+        "list-scenes",
+        "save-images",
+        "-n",
+        "1"
+      ],
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Видео",
+          "required": true,
+          "accept": [
+            "video"
+          ]
+        }
+      ],
+      "requires": [
+        "scenedetect"
+      ],
       "timeout": 7200
     },
     {
@@ -232,12 +822,44 @@
       "title": "Апскейл видео (Video2X, Vulkan)",
       "group": "generation",
       "description": "Real-ESRGAN для анимации. Флаги сверены по документации Video2X 6 — проверить на сервере.",
-      "command": ["video2x", "-i", "{input}", "-o", "{out}/upscaled.mp4", "-p", "realesrgan", "-s", "{scale}", "--realesrgan-model", "realesr-animevideov3"],
-      "params": [
-        {"name": "input", "type": "file", "label": "Видео", "required": true},
-        {"name": "scale", "type": "choice", "label": "Масштаб", "choices": ["2", "3", "4"], "default": "2"}
+      "command": [
+        "video2x",
+        "-i",
+        "{input}",
+        "-o",
+        "{out}/upscaled.mp4",
+        "-p",
+        "realesrgan",
+        "-s",
+        "{scale}",
+        "--realesrgan-model",
+        "realesr-animevideov3"
       ],
-      "requires": ["video2x"],
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Видео",
+          "required": true,
+          "accept": [
+            "video"
+          ]
+        },
+        {
+          "name": "scale",
+          "type": "choice",
+          "label": "Масштаб",
+          "choices": [
+            "2",
+            "3",
+            "4"
+          ],
+          "default": "2"
+        }
+      ],
+      "requires": [
+        "video2x"
+      ],
       "timeout": 86400
     },
     {
@@ -245,9 +867,26 @@
       "title": "Разделить на стемы (audio-separator)",
       "group": "generation",
       "description": "Вокал и инструментал моделью по умолчанию; модели — с GitHub. Флаги сверить с audio-separator --help.",
-      "command": ["audio-separator", "{input}", "--output_dir", "{out}"],
-      "params": [{"name": "input", "type": "file", "label": "Трек", "required": true}],
-      "requires": ["audio-separator"],
+      "command": [
+        "audio-separator",
+        "{input}",
+        "--output_dir",
+        "{out}"
+      ],
+      "params": [
+        {
+          "name": "input",
+          "type": "file",
+          "label": "Трек",
+          "required": true,
+          "accept": [
+            "audio"
+          ]
+        }
+      ],
+      "requires": [
+        "audio-separator"
+      ],
       "timeout": 14400
     },
     {
@@ -255,10 +894,34 @@
       "title": "Озвучка текста (OpenAI-совместимый сервер)",
       "group": "generation",
       "description": "Текст → WAV через локальный сервер озвучки (omnivoice.cpp, qwentts.cpp, обёртка Silero). Адрес — переменная tts_url в config/tools.local.json.",
-      "command": ["{python}", "{repo}/app/tools/tts_openai.py", "--url", "{tts_url}", "--model", "{tts_model}", "--voice", "{voice}", "--text-file", "{text}", "--out", "{out}/speech.wav"],
+      "command": [
+        "{python}",
+        "{repo}/app/tools/tts_openai.py",
+        "--url",
+        "{tts_url}",
+        "--model",
+        "{tts_model}",
+        "--voice",
+        "{voice}",
+        "--text-file",
+        "{text}",
+        "--out",
+        "{out}/speech.wav"
+      ],
       "params": [
-        {"name": "text", "type": "text", "label": "Текст", "required": true},
-        {"name": "voice", "type": "string", "label": "Голос", "default": "default", "pattern": "[A-Za-z0-9_.-]{1,64}"}
+        {
+          "name": "text",
+          "type": "text",
+          "label": "Текст",
+          "required": true
+        },
+        {
+          "name": "voice",
+          "type": "string",
+          "label": "Голос",
+          "default": "default",
+          "pattern": "[A-Za-z0-9_.-]{1,64}"
+        }
       ],
       "timeout": 3600
     },
@@ -267,10 +930,40 @@
       "title": "Распознать речь в субтитры (whisper.cpp)",
       "group": "generation",
       "description": "SRT и VTT из WAV 16 кГц (подготовить инструментом «В WAV 16 кГц»). Пути к whisper-cli и модели — в config/tools.local.json; если на сервере другой Whisper — заменить команду там же.",
-      "command": ["{whisper_cli}", "-m", "{whisper_model}", "-f", "{input}", "-l", "{lang}", "-osrt", "-ovtt", "-of", "{out}/subs"],
+      "command": [
+        "{whisper_cli}",
+        "-m",
+        "{whisper_model}",
+        "-f",
+        "{input}",
+        "-l",
+        "{lang}",
+        "-osrt",
+        "-ovtt",
+        "-of",
+        "{out}/subs"
+      ],
       "params": [
-        {"name": "input", "type": "file", "label": "WAV 16 кГц", "required": true},
-        {"name": "lang", "type": "choice", "label": "Язык", "choices": ["ru", "en", "auto"], "default": "ru"}
+        {
+          "name": "input",
+          "type": "file",
+          "label": "WAV 16 кГц",
+          "required": true,
+          "accept": [
+            "audio"
+          ]
+        },
+        {
+          "name": "lang",
+          "type": "choice",
+          "label": "Язык",
+          "choices": [
+            "ru",
+            "en",
+            "auto"
+          ],
+          "default": "ru"
+        }
       ],
       "timeout": 14400
     },
@@ -279,12 +972,56 @@
       "title": "Картинка (stable-diffusion.cpp)",
       "group": "generation",
       "description": "SD 1.5 / FLUX.2 klein без PyTorch. Пути к бинарнику sd и модели — в config/tools.local.json. На 1050 Ti: 512×912 — ~1 мин.",
-      "command": ["{sd_bin}", "-m", "{sd_model}", "-p", "{prompt}", "-W", "{width}", "-H", "{height}", "--steps", "{steps}", "-o", "{out}/image.png"],
+      "command": [
+        "{sd_bin}",
+        "-m",
+        "{sd_model}",
+        "-p",
+        "{prompt}",
+        "-W",
+        "{width}",
+        "-H",
+        "{height}",
+        "--steps",
+        "{steps}",
+        "-o",
+        "{out}/image.png"
+      ],
       "params": [
-        {"name": "prompt", "type": "string", "label": "Описание", "required": true, "max_length": 1000},
-        {"name": "width", "type": "number", "label": "Ширина", "default": 512, "min": 256, "max": 1024, "integer": true},
-        {"name": "height", "type": "number", "label": "Высота", "default": 912, "min": 256, "max": 1024, "integer": true},
-        {"name": "steps", "type": "number", "label": "Шаги", "default": 20, "min": 1, "max": 60, "integer": true}
+        {
+          "name": "prompt",
+          "type": "string",
+          "label": "Описание",
+          "required": true,
+          "max_length": 1000
+        },
+        {
+          "name": "width",
+          "type": "number",
+          "label": "Ширина",
+          "default": 512,
+          "min": 256,
+          "max": 1024,
+          "integer": true
+        },
+        {
+          "name": "height",
+          "type": "number",
+          "label": "Высота",
+          "default": 912,
+          "min": 256,
+          "max": 1024,
+          "integer": true
+        },
+        {
+          "name": "steps",
+          "type": "number",
+          "label": "Шаги",
+          "default": 20,
+          "min": 1,
+          "max": 60,
+          "integer": true
+        }
       ],
       "timeout": 7200
     },
@@ -293,9 +1030,17 @@
       "title": "Обновить пульт сейчас",
       "group": "system",
       "description": "Запускает обновлятор вне очереди: свежий main из GitHub, тесты, перезапуск. Если тесты не пройдут, пульт останется на прежней версии. Итог — на вкладке «Сервер».",
-      "command": ["systemctl", "--user", "start", "--no-block", "hub-update.service"],
+      "command": [
+        "systemctl",
+        "--user",
+        "start",
+        "--no-block",
+        "hub-update.service"
+      ],
       "params": [],
-      "requires": ["systemctl"],
+      "requires": [
+        "systemctl"
+      ],
       "timeout": 60
     }
   ]

@@ -16,8 +16,8 @@ Claude **не слышит** звук. Эти скрипты дают цифры
 
 | Скрипт | Что делает |
 |---|---|
-| `scripts/loudness_report.py FILE… [--role mix\|beat\|master] [--target -14] [--tp -1] [--json]` | интегральная громкость, макс. кратковременная, LRA, true peak, PLR и выводы по-русски |
-| `scripts/mix_compare.py MIX REF [--json]` | громкость микса и референса, тональный баланс в 6 полосах (без учёта общего уровня), ширина стерео, подсказки |
+| `scripts/loudness_report.py FILE… [--role mix\|beat\|master] [--target -14] [--tp -1] [--json] [--json-out PATH]` | интегральная громкость, макс. кратковременная, LRA, true peak, PLR и выводы по-русски |
+| `scripts/mix_compare.py MIX REF [--json] [--json-out PATH]` | громкость микса и референса, тональный баланс в 6 полосах (без учёта общего уровня), ширина стерео, подсказки |
 | `scripts/loudnorm_2pass.py IN OUT.wav [--target -14] [--tp -1]` | линейная подгонка громкости в два прохода (ffmpeg loudnorm), WAV 24 бит |
 
 ## Когда что запускать

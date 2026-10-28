@@ -63,10 +63,64 @@ def q(value):
 
 
 # --- tools ---------------------------------------------------------------------
-def t_status(_args):
-    s = api("GET", "/api/status")
-    s.pop("jobs", None)
-    return json.dumps(s, ensure_ascii=False, indent=1)
+def _gb(n):
+    return f"{(n or 0) / 1024 ** 3:.1f}".replace(".", ",") + " ГБ"
+
+
+def _n(v, digits=1):
+    if v is None:
+        return "—"
+    return f"{v:.{digits}f}".replace(".", ",") if isinstance(v, (int, float)) else str(v)
+
+
+def summarize_metrics(m):
+    """One paragraph a model can act on: verdict, alerts, key numbers, GPU readiness."""
+    if not m.get("time"):
+        return "Пульт только что запущен — данные о сервере появятся через несколько секунд."
+    verdict = {"ok": "всё в порядке", "warn": "есть замечания", "crit": "есть проблемы"}.get(m.get("status"), "нет данных")
+    age = max(0, round(m.get("now", time.time()) - (m.get("time") or 0)))
+    lines = [f"Сервер {m.get('host', '')}: {verdict} (данные {age} с назад){' · WSL2' if m.get('wsl') else ''}"]
+    alerts = [a for a in m.get("alerts", []) if a["level"] != "info"]
+    if alerts:
+        lines.append("Тревоги: " + "; ".join(f"[{a['level']}] {a['title']}" for a in alerts))
+    cpu, mem, swap = m.get("cpu") or {}, m.get("memory") or {}, m.get("swap") or {}
+    load = cpu.get("load") or [None]
+    lines.append(f"Процессор {_n(cpu.get('percent'), 0)} % ({m.get('cpu_count')} потоков, нагрузка {_n(load[0], 2)}) · "
+                 f"память {_gb(mem.get('used'))} из {_gb(mem.get('total'))} ({_n(mem.get('pct'), 0)} %)"
+                 + (f" · подкачка {_n(swap.get('pct'), 0)} %" if swap.get("total") else ""))
+    for g in m.get("gpus", []):
+        free = (g.get("mem_total_mb") or 0) - (g.get("mem_used_mb") or 0)
+        lines.append(f"Видеокарта {g.get('name')}: загрузка {_n(g.get('util'), 0)} %, видеопамять {_n(g.get('mem_used_mb'), 0)} из "
+                     f"{_n(g.get('mem_total_mb'), 0)} МБ (свободно {free:.0f} МБ), {_n(g.get('temp_c'), 0)} °C, "
+                     f"питание {_n(g.get('power_w'), 0)} Вт")
+    if not m.get("gpus"):
+        lines.append("Видеокарта не видна: " + (m.get("gpu_error") or "nvidia-smi не найден"))
+    disks = m.get("disks") or []
+    if disks:
+        lines.append("Диски: " + " · ".join(f"{d['path']}{' (рабочая папка)' if d.get('workdir') else ''} свободно "
+                                            f"{_gb(d['free'])} ({_n(d['free_pct'], 0)} %)" for d in disks))
+    jobs = m.get("jobs") or {}
+    lines.append(f"Задачи пульта: идёт {jobs.get('running', 0)}, в очереди {jobs.get('queued', 0)}")
+    services = m.get("services") or []
+    if services:
+        lines.append("Службы: " + "; ".join(f"{s['name']} — {'ок' if s['ok'] else s.get('state') or 'нет ответа'}" for s in services))
+    docker = m.get("docker")
+    if docker:
+        lines.append("Контейнеры: " + ", ".join(f"{c['name']} ({c['state']})" for c in docker[:12]))
+    top = m.get("top_cpu") or []
+    if top:
+        lines.append("Больше всего процессора: " + ", ".join(f"{p['name']} {_n(p['cpu'])} %" for p in top[:3]))
+    update = m.get("update") or {}
+    lines.append(f"Пульт {m.get('version')}{' · ' + m['repo']['commit'] if (m.get('repo') or {}).get('commit') else ''}"
+                 + (f" · обновление: {update.get('result')}" if update else ""))
+    return "\n".join(lines)
+
+
+def t_status(args):
+    m = api("GET", "/api/metrics")
+    if args.get("detail"):
+        return json.dumps(m, ensure_ascii=False, indent=1)
+    return summarize_metrics(m)
 
 
 def t_tools(args):
@@ -230,8 +284,10 @@ def _schema(props=None, required=None):
 
 
 TOOLS = [
-    ("hub_status", "Состояние домашнего сервера: загрузка, память, диск, видеокарта, число доступных инструментов.",
-     _schema(), t_status),
+    ("hub_status", "Живое состояние домашнего сервера одним абзацем: итог и тревоги, процессор, память, видеокарта "
+     "(свободная видеопамять, температура), диски, службы и контейнеры, задачи. Смотреть перед тяжёлой задачей на видеокарте. "
+     "detail=true — полный JSON.",
+     _schema({"detail": {"type": "boolean", "default": False}}), t_status),
     ("hub_tools", "Список инструментов пульта (ffmpeg, замеры громкости, озвучка, Whisper, апскейл, картинки) с параметрами.",
      _schema({"available_only": {"type": "boolean", "default": True}}), t_tools),
     ("hub_run", "Запустить инструмент на сервере и подождать результат. params — объект {имя: значение}; файлы — пути из hub_files или hub_upload.",

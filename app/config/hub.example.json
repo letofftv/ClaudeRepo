@@ -3,5 +3,8 @@
   "port": 8787,
   "workdir": "~/hub-work",
   "max_parallel_jobs": 2,
-  "max_upload_mb": 4096
+  "max_upload_mb": 4096,
+  "services": [],
+  "disks": [],
+  "links": []
 }

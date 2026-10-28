@@ -18,6 +18,13 @@ DEFAULTS = {
     "repo_root": str(REPO_ROOT),
     "max_parallel_jobs": 2,
     "max_upload_mb": 4096,
+    "metrics_enabled": True,
+    "metrics_interval": 5,      # seconds between samples of the server panel
+    "services_interval": 15,    # seconds between service/container checks
+    "services": [],             # checks: {"name", "tcp"|"http"|"systemd"|"docker"|"process": ...}
+    "disks": [],                # extra mount points to watch besides / and the work folder
+    "alerts": {},               # threshold overrides, see hub/metrics.py DEFAULT_THRESHOLDS
+    "links": [],                # other panels shown on the Server page: {"title", "url"} (Beszel, Dozzle…)
 }
 
 

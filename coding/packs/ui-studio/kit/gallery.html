@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Галерея компонентов</title>
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="components.css">
+<link rel="stylesheet" href="vendor/uplot/uPlot.min.css">
+<script src="vendor/uplot/uPlot.iife.min.js" defer></script>
+<script type="module" src="gallery.js"></script>
+</head>
+<body>
+<div class="app">
+  <nav class="app-nav" aria-label="Разделы">
+    <div class="app-brand">Галерея ui-studio</div>
+    <a class="nav-item" href="#status" aria-current="page"><svg class="icon" aria-hidden="true"><use href="icons.svg#gauge"></use></svg><span>Статус</span></a>
+    <a class="nav-item" href="#controls"><svg class="icon" aria-hidden="true"><use href="icons.svg#sliders-horizontal"></use></svg><span>Элементы</span></a>
+    <a class="nav-item primary" href="#data"><svg class="icon" aria-hidden="true"><use href="icons.svg#plus"></use></svg><span>Данные</span></a>
+    <a class="nav-item" href="#lists"><svg class="icon" aria-hidden="true"><use href="icons.svg#list-checks"></use></svg><span>Списки</span></a>
+    <a class="nav-item" href="#states"><svg class="icon" aria-hidden="true"><use href="icons.svg#inbox"></use></svg><span>Состояния</span></a>
+  </nav>
+  <div class="app-body">
+    <header class="app-header">
+      <h1>Компоненты</h1>
+      <span class="spacer"></span>
+      <div class="seg" role="group" aria-label="Тема" id="theme-seg">
+        <button type="button" data-mode="auto" aria-pressed="true">Авто</button>
+        <button type="button" data-mode="light" aria-pressed="false">Светлая</button>
+        <button type="button" data-mode="dark" aria-pressed="false">Тёмная</button>
+      </div>
+    </header>
+    <main class="app-main" id="main"></main>
+  </div>
+</div>
+</body>
+</html>

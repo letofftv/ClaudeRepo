@@ -1,10 +1,17 @@
 {
   "name": "music-studio",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Запись вокала под минусовку, сведение, мастеринг, замеры громкости и управление Ableton через MCP — навыки на основе уроков ведущих инженеров сведения и мастеринга.",
   "author": {
     "name": "letofftv"
   },
   "repository": "https://github.com/letofftv/ClaudeRepo",
-  "keywords": ["music", "mixing", "mastering", "vocals", "ableton", "loudness"]
+  "keywords": [
+    "music",
+    "mixing",
+    "mastering",
+    "vocals",
+    "ableton",
+    "loudness"
+  ]
 }

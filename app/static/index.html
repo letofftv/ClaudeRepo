@@ -2,114 +2,49 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Пульт">
 <title>Домашний пульт</title>
-<link rel="stylesheet" href="/static/style.css">
-<script src="/static/app.js" defer></script>
+<link rel="manifest" href="/static/manifest.json">
+<link rel="icon" href="/static/icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="/static/icons/apple-touch-icon.png">
+<link rel="stylesheet" href="/static/tokens.css">
+<link rel="stylesheet" href="/static/kit/base.css">
+<link rel="stylesheet" href="/static/kit/components.css">
+<link rel="stylesheet" href="/static/kit/vendor/uplot/uPlot.min.css">
+<link rel="stylesheet" href="/static/app.css">
+<script src="/static/kit/vendor/uplot/uPlot.iife.min.js" defer></script>
+<script type="module" src="/static/js/main.js"></script>
 </head>
 <body>
-<header class="top">
-  <div class="brand">Домашний пульт</div>
-  <nav class="tabs" id="tabs">
-    <button data-tab="server" class="active">Сервер</button>
-    <button data-tab="tools">Инструменты</button>
-    <button data-tab="jobs">Задачи</button>
-    <button data-tab="files">Файлы</button>
-    <button data-tab="catalog">Каталог</button>
-    <button data-tab="resources">Ресурсы</button>
-    <button data-tab="sets">Наборы</button>
-  </nav>
-  <button class="ghost" id="logout" title="Забыть токен">Выйти</button>
-</header>
-
-<section id="login" class="panel hidden">
-  <h2>Вход</h2>
-  <p>Токен задаётся переменной <code>HUB_TOKEN</code> при запуске сервера (или печатается в консоли, если не задан).</p>
-  <form id="login-form" class="row">
-    <input id="token" type="password" autocomplete="current-password" placeholder="Токен" required>
-    <button type="submit">Войти</button>
+<div id="login" class="login" hidden>
+  <form id="login-form" class="card raised login-card stack gap-4">
+    <div class="stack gap-1">
+      <h1>Домашний пульт</h1>
+      <p class="secondary">Введите токен пульта. Он лежит на сервере в <code>~/.config/hub/env</code> (строка <code>HUB_TOKEN=…</code>) или печатается в консоли при запуске.</p>
+    </div>
+    <div class="field">
+      <label for="token">Токен</label>
+      <input id="token" class="input" type="password" autocomplete="current-password" required>
+    </div>
+    <p id="login-error" class="error-text" role="alert"></p>
+    <button class="btn block" type="submit">Войти</button>
   </form>
-  <p id="login-error" class="error"></p>
-</section>
+</div>
 
-<main id="main" class="hidden">
-  <section data-panel="server" class="panel">
-    <div class="cards" id="server-cards"></div>
-    <h3>Последние задачи</h3>
-    <div id="server-jobs"></div>
-  </section>
-
-  <section data-panel="tools" class="panel hidden">
-    <div class="row filters">
-      <select id="tool-group">
-        <option value="">Все группы</option>
-        <option value="audio">Аудио</option>
-        <option value="video">Видео</option>
-        <option value="generation">Генерация</option>
-        <option value="system">Система</option>
-      </select>
-      <label class="check"><input type="checkbox" id="tool-available"> только доступные</label>
-    </div>
-    <div class="grid" id="tool-list"></div>
-  </section>
-
-  <section data-panel="jobs" class="panel hidden">
-    <div class="split">
-      <div id="job-list" class="list"></div>
-      <div id="job-detail" class="detail"><p class="muted">Выберите задачу слева.</p></div>
-    </div>
-  </section>
-
-  <section data-panel="files" class="panel hidden">
-    <div class="drop" id="drop">
-      <p>Перетащите файлы сюда или</p>
-      <label class="button">выберите<input type="file" id="file-input" multiple hidden></label>
-      <div id="upload-progress"></div>
-    </div>
-    <div id="file-list"></div>
-  </section>
-
-  <section data-panel="catalog" class="panel hidden">
-    <div class="row filters">
-      <input id="cat-search" type="search" placeholder="Поиск по каталогу">
-      <select id="cat-direction"><option value="">Все направления</option></select>
-      <select id="cat-status"><option value="">Любой статус</option></select>
-    </div>
-    <div id="cat-packs"></div>
-    <p class="muted" id="cat-count"></p>
-    <div id="cat-list"></div>
-  </section>
-
-  <section data-panel="resources" class="panel hidden">
-    <div class="row filters">
-      <input id="res-search" type="search" placeholder="Поиск по ресурсам">
-      <select id="res-category"><option value="">Все категории</option></select>
-      <label class="check"><input type="checkbox" id="res-ru"> работает из России</label>
-      <label class="check"><input type="checkbox" id="res-local"> локально</label>
-    </div>
-    <p class="muted" id="res-note"></p>
-    <div id="res-picks"></div>
-    <div id="res-list"></div>
-  </section>
-
-  <section data-panel="sets" class="panel hidden">
-    <p class="muted">Готовые наборы для Claude Code по направлениям. Команды выполняются на маке в терминале, не на сервере. Перед установкой чужого навыка на фабрику — проверка SkillSpector.</p>
-    <div id="set-list"></div>
-  </section>
-</main>
-
-<dialog id="run-dialog">
-  <form method="dialog" id="run-form">
-    <h3 id="run-title"></h3>
-    <p class="muted" id="run-desc"></p>
-    <div id="run-fields"></div>
-    <p id="run-error" class="error"></p>
-    <div class="row end">
-      <button value="cancel" class="ghost" formnovalidate>Отмена</button>
-      <button value="run" id="run-submit">Запустить</button>
-    </div>
-  </form>
-</dialog>
-<div id="toast" class="toast hidden"></div>
+<div id="app" class="app" hidden>
+  <nav id="nav" class="app-nav" aria-label="Разделы"></nav>
+  <div class="app-body">
+    <header class="app-header">
+      <h1 id="page-title">Обзор</h1>
+      <span class="spacer"></span>
+      <a id="health-pill" class="health-pill" href="#/server" aria-label="Состояние сервера"></a>
+      <a class="btn subtle icon-only" href="#/settings" aria-label="Настройки" id="settings-link"></a>
+    </header>
+    <div id="conn-banner" class="conn-banner" role="status" hidden></div>
+    <main id="main" class="app-main" tabindex="-1"></main>
+  </div>
+</div>
 </body>
 </html>

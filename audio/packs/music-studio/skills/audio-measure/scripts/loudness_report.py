@@ -2,7 +2,7 @@
 """Loudness report for audio files using only ffmpeg (EBU R128 / BS.1770).
 
 Usage:
-  loudness_report.py FILE [FILE ...] [--target -14] [--tp -1] [--role mix|beat|master] [--json]
+  loudness_report.py FILE [FILE ...] [--target -14] [--tp -1] [--role mix|beat|master] [--json] [--json-out PATH]
 
 Prints integrated loudness (LUFS), loudness range (LU), true peak (dBTP),
 max short-term loudness and PLR, then plain-language verdicts in Russian.
@@ -113,6 +113,7 @@ def main():
     ap.add_argument("--tp", type=float, default=-1.0, help="предел true peak, dBTP")
     ap.add_argument("--role", choices=["mix", "beat", "master"], default="master")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--json-out", help="также записать результат в JSON-файл (для пульта и других программ)")
     args = ap.parse_args()
 
     results = []
@@ -123,7 +124,12 @@ def main():
             print(e, file=sys.stderr)
             return 1
         r["verdicts"] = verdicts(r, args.target, args.tp, args.role)
+        r.update({"role": args.role, "target_lufs": args.target, "tp_limit_dbtp": args.tp})
         results.append(r)
+
+    if args.json_out:
+        with open(args.json_out, "w", encoding="utf-8") as f:
+            json.dump(results, f, ensure_ascii=False, indent=2)
 
     if args.json:
         print(json.dumps(results, ensure_ascii=False, indent=2))

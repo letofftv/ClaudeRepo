@@ -2,7 +2,7 @@
 """Compare a mix against a reference track: loudness, tonal balance, stereo width.
 
 Usage:
-  mix_compare.py MIX REFERENCE [--json]
+  mix_compare.py MIX REFERENCE [--json] [--json-out PATH]
 
 Tonal balance: each file is split into 6 bands and each band's RMS is taken
 relative to the file's own full-band RMS, so the comparison is level-independent
@@ -64,6 +64,7 @@ def main():
     ap.add_argument("mix")
     ap.add_argument("reference")
     ap.add_argument("--json", action="store_true")
+    ap.add_argument("--json-out", help="также записать результат в JSON-файл (для пульта и других программ)")
     args = ap.parse_args()
 
     try:
@@ -90,7 +91,11 @@ def main():
         hints.insert(0, f"Громкость микса относительно референса: {ld:+} дБ (сравнивайте на слух только после выравнивания).")
 
     result = {"mix": m_loud, "reference": r_loud, "mix_profile": m_prof,
-              "reference_profile": r_prof, "band_diff_db": diffs, "hints": hints}
+              "reference_profile": r_prof, "band_diff_db": diffs, "hints": hints,
+              "bands": [b[0] for b in BANDS]}
+    if args.json_out:
+        with open(args.json_out, "w", encoding="utf-8") as f:
+            json.dump(result, f, ensure_ascii=False, indent=2)
     if args.json:
         print(json.dumps(result, ensure_ascii=False, indent=2))
         return 0

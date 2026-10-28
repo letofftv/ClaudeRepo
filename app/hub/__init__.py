@@ -5,4 +5,4 @@ runner for audio/video/generation tools, the repository's catalog of finds and
 a catalog of free content resources.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"

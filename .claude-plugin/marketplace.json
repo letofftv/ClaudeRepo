@@ -10,6 +10,12 @@
       "source": "./audio/packs/music-studio",
       "description": "Запись вокала под минусовку, сведение, мастеринг, замеры громкости и управление Ableton через MCP — навыки на основе уроков ведущих инженеров.",
       "category": "productivity"
+    },
+    {
+      "name": "ui-studio",
+      "source": "./coding/packs/ui-studio",
+      "description": "Создатель интерфейсов: сценарии и экраны, токены с проверкой контраста, компоненты без сборки, живые панели и автопроверка UI в браузере.",
+      "category": "development"
     }
   ]
 }

@@ -1,0 +1,10 @@
+{
+  "name": "ui-studio",
+  "version": "0.1.0",
+  "description": "Создатель интерфейсов: сценарии и карта экранов, дизайн-токены с проверкой контраста, набор компонентов без сборки (графики uPlot, иконки Lucide), живые панели мониторинга и автопроверка UI в браузере.",
+  "author": {
+    "name": "letofftv"
+  },
+  "repository": "https://github.com/letofftv/ClaudeRepo",
+  "keywords": ["ui", "ux", "design-system", "dashboard", "frontend", "accessibility", "playwright"]
+}

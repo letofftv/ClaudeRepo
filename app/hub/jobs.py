@@ -1,5 +1,7 @@
 """Background job runner: one thread pool, one folder per job, logs on disk."""
 import json
+import re
+import shutil
 import subprocess
 import sys
 import threading
@@ -11,6 +13,14 @@ from pathlib import Path
 from .tools import build_argv, tool_status
 
 STATES = ("queued", "running", "done", "failed", "cancelled")
+DURATION = re.compile(r"Duration: (\d+):(\d+):(\d+(?:\.\d+)?)")
+TIME = re.compile(r"time=(\d+):(\d+):(\d+(?:\.\d+)?)")
+SPEED = re.compile(r"speed=\s*([\d.]+)x")
+
+
+def _seconds(match):
+    h, m, s = match
+    return int(h) * 3600 + int(m) * 60 + float(s)
 
 
 class JobManager:
@@ -123,7 +133,73 @@ class JobManager:
         else:
             info["log"] = ""
         info["files"] = self.files(job_id)
+        if job["state"] == "running":
+            info["progress"] = self.progress(job_id)
+        result = self.root / job_id / "out" / "report.json"
+        if result.exists():
+            try:
+                info["report"] = json.loads(result.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                info["report"] = None
         return info
+
+    def progress(self, job_id):
+        """Best-effort percent and ETA for ffmpeg jobs, read from the log tail."""
+        log_path = self.root / job_id / "log.txt"
+        try:
+            with open(log_path, "rb") as f:
+                head = f.read(65536).decode("utf-8", errors="replace")
+                f.seek(max(0, log_path.stat().st_size - 8192))
+                tail = f.read().decode("utf-8", errors="replace")
+        except OSError:
+            return None
+        durations = [_seconds(m) for m in DURATION.findall(head)]
+        times = TIME.findall(tail)
+        if not durations or not times or not max(durations):
+            return None
+        total, done = max(durations), _seconds(times[-1])
+        info = {"percent": round(min(99.0, done / total * 100), 1)}
+        speeds = SPEED.findall(tail)
+        if speeds:
+            try:
+                speed = float(speeds[-1])
+                if speed > 0:
+                    info["eta_s"] = round(max(0.0, total - done) / speed)
+            except ValueError:
+                pass
+        return info
+
+    def recent_failures(self, seconds):
+        cutoff = time.time() - seconds
+        return [{"id": j["id"], "title": j["title"]} for j in list(self.jobs.values())
+                if j["state"] == "failed" and (j.get("finished") or 0) >= cutoff]
+
+    def delete(self, job_id):
+        with self.lock:
+            job = self.jobs.get(job_id)
+            if not job or job["state"] in ("queued", "running"):
+                return False
+            self.jobs.pop(job_id)
+        shutil.rmtree(self.root / job_id, ignore_errors=True)
+        return True
+
+    def cleanup(self, older_than_days):
+        """Delete finished jobs older than N days; returns how many went."""
+        cutoff = time.time() - older_than_days * 86400
+        old = [j["id"] for j in list(self.jobs.values())
+               if j["state"] not in ("queued", "running") and (j.get("finished") or j["created"]) < cutoff]
+        return sum(self.delete(job_id) for job_id in old)
+
+    def usage(self):
+        total = files = 0
+        for path in self.root.rglob("*"):
+            if path.is_file():
+                files += 1
+                try:
+                    total += path.stat().st_size
+                except OSError:
+                    pass
+        return {"jobs": len(self.jobs), "files": files, "bytes": total}
 
     def files(self, job_id):
         out = self.root / job_id / "out"
@@ -137,5 +213,15 @@ class JobManager:
 
     def list(self, limit=50):
         jobs = sorted(self.jobs.values(), key=lambda j: j["created"], reverse=True)
-        return [{k: j[k] for k in ("id", "tool", "title", "state", "created", "finished", "returncode", "error")}
-                for j in jobs[:limit]]
+        out = []
+        for j in jobs[:limit]:
+            row = {k: j.get(k) for k in ("id", "tool", "title", "state", "created", "started", "finished",
+                                         "returncode", "error")}
+            if j["state"] == "running":
+                row["progress"] = self.progress(j["id"])
+            out.append(row)
+        return out
+
+    def counts(self):
+        states = [j["state"] for j in self.jobs.values()]
+        return {s: states.count(s) for s in ("queued", "running")}

@@ -172,6 +172,27 @@
       ]
     },
     {
+      "id": "ui",
+      "title": "Интерфейсы (ui-studio)",
+      "where": "мак",
+      "description": "Свой пакет «создатель интерфейсов»: сценарии → экраны → токены → компоненты без сборки → живые панели → проверка в браузере.",
+      "steps": [
+        {
+          "title": "Поставить пакет",
+          "commands": "claude plugin marketplace add letofftv/ClaudeRepo\nclaude plugin install ui-studio@clauderepo"
+        },
+        {
+          "title": "Браузер для проверок",
+          "note": "или --channel chrome с установленным Chrome",
+          "commands": "npm i -g playwright && npx playwright install chromium"
+        },
+        {
+          "title": "Новый интерфейс",
+          "commands": "python3 <пакет>/scripts/scaffold.py new ./my-panel --title \"Моя панель\"\nnode <пакет>/scripts/ui_check.mjs --serve ./my-panel --routes index.html"
+        }
+      ]
+    },
+    {
       "id": "productivity",
       "title": "Организация работы",
       "where": "мак",

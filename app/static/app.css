@@ -1,0 +1,109 @@
+/* Домашний пульт: styles specific to this app. Everything generic lives in kit/. */
+
+/* login */
+.login { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: var(--s-4); }
+.login-card { width: min(440px, 100%); padding: var(--s-6); }
+.login-card h1 { font-size: var(--fs-6); }
+
+/* header: health pill */
+.health-pill {
+  display: inline-flex; align-items: center; gap: var(--s-2);
+  min-height: 36px; padding: 0 var(--s-3); border-radius: var(--r-full);
+  background: var(--surface-2); color: var(--text); text-decoration: none; font-size: var(--fs-2); font-weight: 600;
+}
+.health-pill:hover { background: var(--surface-3); color: var(--text); }
+.health-pill[data-level="warn"] { background: var(--warn-soft); }
+.health-pill[data-level="crit"] { background: var(--bad-soft); }
+@media (max-width: 719px) { .health-pill { min-height: var(--tap); } }
+
+/* connection banner under the header */
+.conn-banner {
+  display: flex; align-items: center; gap: var(--s-3); flex-wrap: wrap;
+  padding: var(--s-2) var(--s-6); background: var(--warn-soft); color: var(--text);
+  border-bottom: 1px solid var(--border); font-size: var(--fs-2);
+}
+.conn-banner .icon { color: var(--warn-text); }
+@media (max-width: 899px) { .conn-banner { padding: var(--s-2) var(--s-4); } }
+
+/* live meta in page heads */
+.live { display: inline-flex; align-items: center; gap: var(--s-2); color: var(--muted); font-size: var(--fs-2); }
+.badges { display: inline-flex; flex-wrap: wrap; gap: var(--s-1); }
+
+/* tiles grid: 2 columns on phones, auto on wide screens */
+.tiles { display: grid; gap: var(--s-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 190px), 1fr)); }
+@media (max-width: 719px) { .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } .tile-value { font-size: var(--fs-5); } }
+a.tile:hover { border-color: var(--border-strong); }
+
+/* readiness line */
+.ready { display: flex; align-items: center; gap: var(--s-3); padding: var(--s-3) var(--s-4); border-radius: var(--r-2);
+  background: var(--surface); border: 1px solid var(--border); }
+.ready[data-level="ok"] .icon { color: var(--ok-text); }
+.ready[data-level="warn"] .icon { color: var(--warn-text); }
+.ready-title { font-weight: 600; }
+
+/* two-column page areas */
+.cols { display: grid; gap: var(--s-4); grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+.cols-wide { display: grid; gap: var(--s-4); grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); align-items: start; }
+@media (max-width: 899px) { .cols, .cols-wide { grid-template-columns: minmax(0, 1fr); } }
+
+/* chart cards */
+.chart-card .card-head .now { margin-left: auto; font-size: var(--fs-2); color: var(--text-2); font-variant-numeric: tabular-nums; }
+.chart-card details { margin-top: var(--s-2); }
+
+/* filter row above charts */
+.filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s-3); margin: var(--s-6) 0 var(--s-3); }
+.filter-row h3 { font-size: var(--fs-4); margin-right: auto; }
+
+/* jobs: list + detail */
+.jobs-layout { display: grid; gap: var(--s-4); grid-template-columns: minmax(260px, 360px) minmax(0, 1fr); align-items: start; }
+@media (max-width: 899px) { .jobs-layout { grid-template-columns: minmax(0, 1fr); } .jobs-layout.has-detail .jobs-list { display: none; } }
+@media (min-width: 900px) { .back-link { display: none !important; } }
+.job-progress { display: flex; align-items: center; gap: var(--s-3); }
+.job-progress .progress { flex: 1; }
+.list-item .progress { margin-top: 6px; }
+
+/* report cards: loudness and mix comparison */
+.metric-grid { display: grid; gap: var(--s-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); }
+.metric { padding: var(--s-3); border-radius: var(--r-2); background: var(--surface-2); }
+.metric-label { color: var(--text-2); font-size: var(--fs-2); }
+.metric-value { font-size: var(--fs-5); font-weight: 650; }
+.metric-note { font-size: var(--fs-2); display: flex; align-items: center; gap: 4px; }
+.metric-note[data-level="ok"] { color: var(--ok-text); }
+.metric-note[data-level="warn"] { color: var(--warn-text); }
+.metric-note[data-level="crit"] { color: var(--bad-text); }
+.verdicts { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: var(--s-1); }
+
+/* diverging bars: band balance vs reference */
+.band-row { display: grid; grid-template-columns: minmax(110px, 34%) 1fr 64px; align-items: center; gap: var(--s-3); font-size: var(--fs-2); }
+.band-track { position: relative; height: 10px; background: var(--surface-3); border-radius: var(--r-full); }
+.band-track::after { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--axis); }
+.band-fill { position: absolute; top: 0; bottom: 0; border-radius: var(--r-full); background: var(--muted); }
+.band-fill[data-level="warn"] { background: var(--warn); }
+.band-value { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* tool cards */
+.tool-card { display: flex; flex-direction: column; gap: var(--s-2); }
+.tool-card .tool-head { display: flex; align-items: center; gap: var(--s-2); }
+.tool-card .tool-head .icon { color: var(--accent); }
+.tool-card h4 { font-size: var(--fs-3); }
+.tool-card p { color: var(--text-2); font-size: var(--fs-2); flex: 1; }
+.tool-card .tool-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--s-2); }
+
+/* library entries */
+.entry-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--s-2); }
+.entry-head strong { font-size: var(--fs-3); }
+.entry p { color: var(--text-2); font-size: var(--fs-2); }
+
+/* small helpers */
+.link-row { display: flex; flex-wrap: wrap; gap: var(--s-3); font-size: var(--fs-2); }
+.preview-box { margin-top: var(--s-2); }
+.inline-actions { display: inline-flex; gap: var(--s-1); flex-wrap: wrap; justify-content: flex-end; }
+
+/* list cards: header padding inside a flush card */
+.card.flush > .list-head { padding: var(--s-3) var(--s-4) var(--s-2); margin: 0; }
+.list-head a { margin-left: auto; font-size: var(--fs-2); }
+.list-head h3 { font-size: var(--fs-4); }
+
+/* standalone text links: real tap targets */
+.link-row a, .entry-head a, .back-link { display: inline-flex; align-items: center; min-height: 32px; }
+@media (max-width: 719px) { .link-row a, .entry-head a, .back-link { min-height: var(--tap); min-width: var(--tap); } }

@@ -11,6 +11,13 @@
 |---|---|---|---|
 | SkillSpector (NVIDIA) | проверка навыков на уязвимости перед установкой | **взять** | [skillspector.md](finds/skillspector.md) |
 | everything-claude-code (ECC) | сборка для разработки программ — перенесена в [`coding/`](../coding/README.md) | отклонено | [everything-claude-code.md](../coding/finds/everything-claude-code.md) |
+| Beszel | история сервера за 30 дней, графики по контейнерам, оповещения; агент для Windows видит хост | **попробовать** | [beszel.md](finds/beszel.md) |
+| Dozzle | логи контейнеров в браузере, ссылка из панели пульта | **попробовать** | [dozzle.md](finds/dozzle.md) |
+| LibreHardwareMonitor | датчики Windows-хоста по HTTP (температура ЦП, которой не видно из WSL) | **попробовать** | [librehardwaremonitor.md](finds/librehardwaremonitor.md) |
+
+Панель состояния сервера — в «Домашнем пульте» ([`app/`](../app/README.md),
+раздел «Сервер»). Почему своя, а не готовая, и какие пороги взяты — в
+[исследовании инструментов для интерфейсов](../coding/research/2026-10-28-ui-tools.md#3-панели-мониторинга-домашнего-сервера).
 
 ## Бесплатные ресурсы для контента
 

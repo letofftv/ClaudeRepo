@@ -104,6 +104,7 @@ class HubTest(unittest.TestCase):
         cls.server.server_close()
         cls.tts.shutdown()
         cls.tts.server_close()
+        cls.hub.close()
         cls.hub.jobs.pool.shutdown(wait=False, cancel_futures=True)
         shutil.rmtree(cls.tmp, ignore_errors=True)
 
@@ -180,9 +181,50 @@ class HubTest(unittest.TestCase):
         self.assertEqual(code, 200)
         self.assertIn(b"<title>", data)
         self.assertIn("default-src 'self'", headers["Content-Security-Policy"])
-        self.assertEqual(self.call("GET", "/static/app.js", token=None)[0], 200)
+        self.assertIn("frame-ancestors 'none'", headers["Content-Security-Policy"])
+        code, _, headers = self.call("GET", "/static/js/main.js", token=None)
+        self.assertEqual(code, 200)
+        self.assertTrue(headers["Content-Type"].startswith("text/javascript"))  # pinned for ES modules
+        self.assertEqual(self.call("GET", "/static/js/main.js", token=None,
+                                   headers={"If-Modified-Since": headers["Last-Modified"]})[0], 304)
         self.assertEqual(self.call("GET", "/static/../hub/config.py", token=None)[0], 404)
         self.assertEqual(self.call("GET", "/static/%2e%2e/hub/config.py", token=None)[0], 404)
+
+    def test_metrics_history_and_ui_config(self):
+        deadline = time.time() + 15
+        while time.time() < deadline:
+            code, m = self.json_call("GET", "/api/metrics")
+            if m.get("time"):
+                break
+            time.sleep(0.3)
+        self.assertEqual(code, 200)
+        self.assertIn(m["status"], ("ok", "warn", "crit"))
+        for key in ("cpu", "memory", "disks", "net", "alerts", "services", "top_cpu", "jobs", "version"):
+            self.assertIn(key, m)
+        self.assertTrue(any(d["workdir"] for d in m["disks"]))
+        code, hist = self.json_call("GET", "/api/metrics/history?range=15m")
+        self.assertEqual(code, 200)
+        self.assertEqual(len(hist["series"]["t"]), len(hist["series"]["cpu"]))
+        code, ui = self.json_call("GET", "/api/ui")
+        self.assertEqual(code, 200)
+        self.assertEqual(ui["version"], m["version"])
+        self.assertEqual(self.call("GET", "/api/metrics", token=None)[0], 401)
+
+    def test_delete_and_cleanup_jobs(self):
+        code, job = self.json_call("POST", "/api/jobs", {"tool": "echo_args", "params": {"a": "x"}})
+        self.assertEqual(code, 201)
+        for _ in range(50):
+            if self.json_call("GET", "/api/jobs/" + job["id"])[1]["state"] == "done":
+                break
+            time.sleep(0.1)
+        self.assertGreater(self.json_call("GET", "/api/jobs/usage")[1]["files"], 0)
+        self.assertEqual(self.json_call("DELETE", "/api/jobs/" + job["id"])[0], 200)
+        self.assertEqual(self.json_call("GET", "/api/jobs/" + job["id"])[0], 404)
+        self.assertEqual(self.json_call("DELETE", "/api/jobs/" + job["id"])[0], 404)
+        self.assertEqual(self.json_call("POST", "/api/jobs/cleanup", {"older_than_days": 0})[0], 400)
+        code, res = self.json_call("POST", "/api/jobs/cleanup", {"older_than_days": 30})
+        self.assertEqual(code, 200)
+        self.assertEqual(res["deleted"], 0)  # nothing that old
 
     # --- files ---------------------------------------------------------------
     def test_upload_sanitizes_name(self):
@@ -248,6 +290,9 @@ class HubTest(unittest.TestCase):
         job = self.run_job("loudness_report", {"input": info["path"], "role": "master"})
         self.assertEqual(job["state"], "done", job["log"])
         self.assertIn("LUFS", job["log"])
+        report = job["report"][0]  # --json-out → the UI renders numbers, not the log
+        self.assertIsNotNone(report["integrated_lufs"])
+        self.assertEqual(report["role"], "master")
 
     @unittest.skipUnless(HAS_FFMPEG, "ffmpeg not installed")
     def test_transcode_and_download(self):
@@ -369,9 +414,16 @@ class HubTest(unittest.TestCase):
             names = [t["name"] for t in rpc("tools/list")["result"]["tools"]]
             self.assertIn("hub_run", names)
             self.assertEqual(rpc("nope")["error"]["code"], -32601)
+            for _ in range(60):  # the sampler needs a moment after start
+                if self.json_call("GET", "/api/metrics")[1].get("time"):
+                    break
+                time.sleep(0.25)
             status = tool("hub_status")
             self.assertFalse(status["isError"])
-            self.assertIn("disk", status["content"][0]["text"])
+            self.assertIn("Сервер", status["content"][0]["text"])
+            self.assertIn("Диски:", status["content"][0]["text"])
+            detail = json.loads(tool("hub_status", detail=True)["content"][0]["text"])
+            self.assertIn("disks", detail)
             self.assertIn("loudness_report", tool("hub_tools")["content"][0]["text"])
             self.assertIn("Найдено", tool("hub_catalog", query="ffmpeg")["content"][0]["text"])
             note = self.tmp / "bridge-note.txt"
