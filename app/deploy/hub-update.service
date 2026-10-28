@@ -1,0 +1,10 @@
+# One update run: pull main, test, restart hub.service (see update.sh).
+[Unit]
+Description=Update the home hub from GitHub
+After=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=-%h/.config/hub/env
+ExecStart=%h/ClaudeRepo/app/deploy/update.sh
+TimeoutStartSec=1200

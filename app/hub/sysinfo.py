@@ -1,4 +1,5 @@
-"""Server status: CPU, memory, disk, GPU (nvidia-smi), uptime."""
+"""Server status: CPU, memory, disk, GPU (nvidia-smi), uptime, version."""
+import json
 import os
 import platform
 import shutil
@@ -43,6 +44,29 @@ def _gpus():
             gpus.append({"name": parts[0], "mem_used_mb": parts[1], "mem_total_mb": parts[2],
                          "util_percent": parts[3], "temp_c": parts[4], "driver": parts[5]})
     return gpus
+
+
+def repo_info(repo_root):
+    """Commit the hub runs from — shows that an update arrived."""
+    exe = shutil.which("git")
+    if not exe:
+        return {}
+    try:
+        out = subprocess.run([exe, "-C", str(repo_root), "log", "-1", "--format=%h%x00%cI%x00%s"],
+                             capture_output=True, text=True, timeout=5).stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        return {}
+    parts = out.split("\0")
+    return dict(zip(("commit", "date", "subject"), parts)) if len(parts) == 3 else {}
+
+
+def update_status(workdir):
+    """Last result of deploy/update.sh, if the updater runs on this machine."""
+    try:
+        with open(os.path.join(workdir, "update-status.json"), encoding="utf-8") as f:
+            return json.load(f)
+    except (OSError, ValueError):
+        return None
 
 
 def status(workdir):

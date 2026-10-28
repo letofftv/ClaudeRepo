@@ -162,6 +162,19 @@ class HubTest(unittest.TestCase):
         self.assertGreaterEqual(status["tools_total"], 20)
         self.assertIn("disk", status)
 
+    def test_status_shows_version_and_update(self):
+        status = self.json_call("GET", "/api/status")[1]
+        self.assertRegex(status["version"], r"^\d+\.\d+\.\d+$")
+        if shutil.which("git"):
+            self.assertRegex(status["repo"].get("commit", ""), r"^[0-9a-f]{7,}$")
+        self.assertIsNone(status["update"])
+        path = Path(self.settings.workdir) / "update-status.json"
+        path.write_text(json.dumps({"time": 1, "result": "tests-failed", "message": "x"}))
+        try:
+            self.assertEqual(self.json_call("GET", "/api/status")[1]["update"]["result"], "tests-failed")
+        finally:
+            path.unlink()
+
     def test_static_and_traversal(self):
         code, data, headers = self.call("GET", "/", token=None)
         self.assertEqual(code, 200)

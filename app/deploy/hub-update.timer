@@ -1,0 +1,12 @@
+# Check GitHub for a new version of the hub every hour (and 5 minutes after boot).
+[Unit]
+Description=Hourly update check for the home hub
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=1h
+RandomizedDelaySec=5min
+Persistent=true
+
+[Install]
+WantedBy=timers.target

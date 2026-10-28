@@ -289,14 +289,14 @@
       "timeout": 7200
     },
     {
-      "id": "repo_update",
-      "title": "Обновить каталог из GitHub",
+      "id": "update_now",
+      "title": "Обновить пульт сейчас",
       "group": "system",
-      "description": "git pull репозитория ClaudeRepo — свежие находки, ресурсы и скрипты.",
-      "command": ["git", "-C", "{repo}", "pull", "--ff-only"],
+      "description": "Запускает обновлятор вне очереди: свежий main из GitHub, тесты, перезапуск. Если тесты не пройдут, пульт останется на прежней версии. Итог — на вкладке «Сервер».",
+      "command": ["systemctl", "--user", "start", "--no-block", "hub-update.service"],
       "params": [],
-      "requires": ["git"],
-      "timeout": 300
+      "requires": ["systemctl"],
+      "timeout": 60
     }
   ]
 }

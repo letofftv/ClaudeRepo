@@ -1,21 +1,24 @@
-# systemd unit for the home hub (Ubuntu). Copy to /etc/systemd/system/hub.service,
-# set User and paths, put the token into an override:
-#   sudo systemctl edit hub   ->   [Service]
-#                                  Environment=HUB_TOKEN=...
+# Home hub as a systemd USER service (no root needed, the updater can restart it).
+# Install:
+#   mkdir -p ~/.config/systemd/user ~/.config/hub
+#   cp hub.service hub-update.service hub-update.timer ~/.config/systemd/user/
+#   printf 'HUB_TOKEN=%s\n' "$(python3 -c 'import secrets; print(secrets.token_urlsafe(24))')" > ~/.config/hub/env
+#   chmod 600 ~/.config/hub/env
+#   systemctl --user daemon-reload && systemctl --user enable --now hub.service hub-update.timer
+#   sudo loginctl enable-linger "$USER"     # start at boot without a login
+# The clone is expected at ~/ClaudeRepo; change the paths below if it lives elsewhere.
 [Unit]
 Description=Home hub (ClaudeRepo/app)
 After=network-online.target
-Wants=network-online.target
 
 [Service]
 Type=simple
-User=hub
-WorkingDirectory=/home/hub/ClaudeRepo/app
+WorkingDirectory=%h/ClaudeRepo/app
+EnvironmentFile=%h/.config/hub/env
 ExecStart=/usr/bin/python3 -m hub --config config/hub.json
 Restart=on-failure
 RestartSec=5
 NoNewPrivileges=true
-PrivateTmp=true
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=default.target

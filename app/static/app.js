@@ -6,6 +6,10 @@ const STATES = { queued: "в очереди", running: "идёт", done: "гот
 const STATE_CLASS = { done: "ok", failed: "bad", cancelled: "warn", running: "warn", queued: "" };
 const RU_ACCESS = { yes: "из России работает", vpn: "нужен VPN", no: "из России недоступно", unknown: "доступ не проверен" };
 const REPO_URL = "https://github.com/letofftv/ClaudeRepo/blob/main/";
+const UPDATE_RESULT = {
+  updated: "обновлён", "up-to-date": "свежая версия", "tests-failed": "новая версия не прошла тесты",
+  error: "ошибка обновления", "local-changes": "в клоне правки — обновление стоит",
+};
 
 const state = { token: "", tab: "server", tools: [], catalog: null, resources: null, sets: null, jobId: null, timer: null };
 
@@ -167,7 +171,15 @@ async function loadServer() {
   }
   if (!(s.gpus || []).length) cards.push(statCard("Видеокарта", "не видна", "nvidia-smi не найден"));
   cards.push(statCard("Инструменты", `${s.tools_available} из ${s.tools_total}`, s.ffmpeg ? "ffmpeg есть" : "ffmpeg не найден!"));
-  cards.push(statCard("Работает", fmtDuration(s.uptime_s), "версия пульта " + s.version));
+  cards.push(statCard("Работает", fmtDuration(s.uptime_s), "с последнего запуска системы"));
+  const repo = s.repo || {};
+  const upd = s.update;
+  const updText = upd ? `${UPDATE_RESULT[upd.result] || upd.result} · проверено ${fmtTime(upd.time)}` : "обновлятор не настроен";
+  cards.push(statCard("Версия пульта", s.version + (repo.commit ? " · " + repo.commit : ""),
+    (repo.date ? "от " + new Date(repo.date).toLocaleDateString("ru-RU") + " · " : "") + updText));
+  if (upd && !["updated", "up-to-date"].includes(upd.result)) {
+    cards.push(statCard("Обновление остановлено", UPDATE_RESULT[upd.result] || upd.result, upd.message));
+  }
   $("#server-cards").replaceChildren(...cards);
   $("#server-jobs").replaceChildren(s.jobs.length
     ? el("table", {}, el("tbody", {}, s.jobs.map(jobRow)))

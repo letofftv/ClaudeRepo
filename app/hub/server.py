@@ -15,6 +15,7 @@ from . import __version__
 from .catalog import build_catalog
 from .config import APP_DIR, load_settings
 from .jobs import JobManager
+from .sysinfo import repo_info, update_status
 from .sysinfo import status as sys_status
 from .tools import ParamError, load_tools, public_tool, safe_filename
 
@@ -203,6 +204,8 @@ class Handler(BaseHTTPRequestHandler):
             info["tools_available"] = sum(t["available"] for t in tools)
             info["jobs"] = hub.jobs.list(limit=10)
             info["version"] = __version__
+            info["repo"] = repo_info(hub.settings.repo_root)
+            info["update"] = update_status(hub.settings.workdir)
             return self._json(info)
         if path == "/api/tools":
             return self._json([public_tool(t, hub.variables) for t in hub.tools])

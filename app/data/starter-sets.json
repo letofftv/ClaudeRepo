@@ -5,12 +5,31 @@
       "id": "hub-server",
       "title": "Пульт на домашнем сервере",
       "where": "сервер",
-      "description": "Нужен только Python 3.9+ и ffmpeg. Остальные инструменты пульт найдёт сам, если они есть в PATH; недостающие показывает серыми с причиной.",
+      "description": "Проще всего поручить установку Claude Code на сервере (первый шаг). Вручную нужен только Python 3.9+ и ffmpeg; остальные инструменты пульт найдёт сам, если они есть в PATH, недостающие показывает серыми с причиной.",
       "steps": [
-        {"title": "Забрать репозиторий и запустить", "commands": "git clone https://github.com/letofftv/ClaudeRepo.git ~/ClaudeRepo\ncd ~/ClaudeRepo/app\ncp config/hub.example.json config/hub.json\nexport HUB_TOKEN=\"$(python3 -c 'import secrets; print(secrets.token_urlsafe(24))')\"\necho \"$HUB_TOKEN\"   # сохранить в менеджер паролей\npython3 -m hub --config config/hub.json"},
-        {"title": "Доступ из домашней сети или VPN", "note": "по умолчанию пульт слушает только 127.0.0.1; адрес VPN-интерфейса вписать в bind в config/hub.json, наружу в интернет порт не открывать", "commands": "\"bind\": \"<адрес сервера в VPN>\""},
-        {"title": "Пути к Whisper, озвучке и генерации картинок", "commands": "cp config/tools.local.example.json config/tools.local.json\n# вписать пути к whisper-cli, модели, sd, адрес сервера озвучки"},
-        {"title": "Автозапуск (Ubuntu, systemd)", "commands": "sudo cp ~/ClaudeRepo/app/deploy/hub.service /etc/systemd/system/hub.service\nsudo systemctl edit hub   # вписать Environment=HUB_TOKEN=...\nsudo systemctl enable --now hub"}
+        {
+          "title": "Или поручить всё Claude Code на сервере",
+          "note": "запустить claude в пустой папке ~/hub-ops и вставить",
+          "commands": "Ты — оператор «Домашнего пульта» на этом сервере. Прочитай и выполни https://raw.githubusercontent.com/letofftv/ClaudeRepo/main/app/deploy/server-prompt.md (раздел «Промпт»)."
+        },
+        {
+          "title": "Забрать репозиторий и запустить",
+          "commands": "git clone https://github.com/letofftv/ClaudeRepo.git ~/ClaudeRepo\ncd ~/ClaudeRepo/app\ncp config/hub.example.json config/hub.json\nexport HUB_TOKEN=\"$(python3 -c 'import secrets; print(secrets.token_urlsafe(24))')\"\necho \"$HUB_TOKEN\"   # сохранить в менеджер паролей\npython3 -m hub --config config/hub.json"
+        },
+        {
+          "title": "Доступ из домашней сети или VPN",
+          "note": "по умолчанию пульт слушает только 127.0.0.1; адрес VPN-интерфейса вписать в bind в config/hub.json, наружу в интернет порт не открывать",
+          "commands": "\"bind\": \"<адрес сервера в VPN>\""
+        },
+        {
+          "title": "Пути к Whisper, озвучке и генерации картинок",
+          "commands": "cp config/tools.local.example.json config/tools.local.json\n# вписать пути к whisper-cli, модели, sd, адрес сервера озвучки"
+        },
+        {
+          "title": "Автозапуск и автообновление (systemd, без root)",
+          "note": "раз в час: свежий main → тесты → перезапуск; при провале — откат",
+          "commands": "mkdir -p ~/.config/systemd/user ~/.config/hub\ncp ~/ClaudeRepo/app/deploy/hub.service ~/ClaudeRepo/app/deploy/hub-update.* ~/.config/systemd/user/\nprintf 'HUB_TOKEN=%s\\n' \"$(python3 -c 'import secrets; print(secrets.token_urlsafe(24))')\" > ~/.config/hub/env && chmod 600 ~/.config/hub/env\nsystemctl --user daemon-reload && systemctl --user enable --now hub.service hub-update.timer\nsudo loginctl enable-linger \"$USER\""
+        }
       ]
     },
     {
@@ -19,12 +38,34 @@
       "where": "сервер",
       "description": "Каждый — по желанию. Перед установкой — карточка в репозитории (ссылка в «Каталоге»). PyTorch на GTX 1050 Ti — только сборки cu126 не новее 2.14.",
       "steps": [
-        {"title": "Вырезать тишину, таймлайн для Premiere", "commands": "pipx install auto-editor"},
-        {"title": "Нарезка по сценам", "commands": "pipx install \"scenedetect[opencv-headless]\""},
-        {"title": "Стемы (вокал / минус)", "note": "на сервере — CPU-вариант; модели качаются с GitHub", "commands": "pipx install \"audio-separator[cpu]\""},
-        {"title": "Субтитры: whisper.cpp на видеокарте", "note": "CUDA 12.x, архитектура 61 добавляется сама; модель — ggml-large-v3 или large-v3-turbo", "commands": "git clone https://github.com/ggml-org/whisper.cpp ~/src/whisper.cpp\ncd ~/src/whisper.cpp\ncmake -B build -DGGML_CUDA=1 && cmake --build build -j --config Release\n# в tools.local.json: whisper_cli = ~/src/whisper.cpp/build/bin/whisper-cli"},
-        {"title": "Картинки: stable-diffusion.cpp", "note": "без PyTorch; бинарник может называться sd или sd-cli — путь вписать в sd_bin", "commands": "git clone --recursive https://github.com/leejet/stable-diffusion.cpp ~/src/sd.cpp\ncd ~/src/sd.cpp\ncmake -B build -DSD_CUDA=ON && cmake --build build -j --config Release"},
-        {"title": "Апскейл: Video2X (Vulkan)", "note": "AppImage или пакет из релизов GitHub; флаги сверить с video2x --help", "commands": "video2x --help"}
+        {
+          "title": "Вырезать тишину, таймлайн для Premiere",
+          "commands": "pipx install auto-editor"
+        },
+        {
+          "title": "Нарезка по сценам",
+          "commands": "pipx install \"scenedetect[opencv-headless]\""
+        },
+        {
+          "title": "Стемы (вокал / минус)",
+          "note": "на сервере — CPU-вариант; модели качаются с GitHub",
+          "commands": "pipx install \"audio-separator[cpu]\""
+        },
+        {
+          "title": "Субтитры: whisper.cpp на видеокарте",
+          "note": "CUDA 12.x, архитектура 61 добавляется сама; модель — ggml-large-v3 или large-v3-turbo",
+          "commands": "git clone https://github.com/ggml-org/whisper.cpp ~/src/whisper.cpp\ncd ~/src/whisper.cpp\ncmake -B build -DGGML_CUDA=1 && cmake --build build -j --config Release\n# в tools.local.json: whisper_cli = ~/src/whisper.cpp/build/bin/whisper-cli"
+        },
+        {
+          "title": "Картинки: stable-diffusion.cpp",
+          "note": "без PyTorch; бинарник может называться sd или sd-cli — путь вписать в sd_bin",
+          "commands": "git clone --recursive https://github.com/leejet/stable-diffusion.cpp ~/src/sd.cpp\ncd ~/src/sd.cpp\ncmake -B build -DSD_CUDA=ON && cmake --build build -j --config Release"
+        },
+        {
+          "title": "Апскейл: Video2X (Vulkan)",
+          "note": "AppImage или пакет из релизов GitHub; флаги сверить с video2x --help",
+          "commands": "video2x --help"
+        }
       ]
     },
     {
@@ -33,8 +74,15 @@
       "where": "мак",
       "description": "Мост MCP: Claude на маке видит состояние сервера, запускает инструменты, загружает файлы и смотрит результаты (кадры, контактные листы, отчёты громкости).",
       "steps": [
-        {"title": "Подключить мост", "commands": "git clone https://github.com/letofftv/ClaudeRepo.git ~/ClaudeRepo\nclaude mcp add home --scope user \\\n  --env HUB_URL=http://<адрес сервера>:8787 \\\n  --env HUB_TOKEN=<токен> \\\n  -- python3 ~/ClaudeRepo/app/mcp_bridge.py"},
-        {"title": "Проверить", "note": "в сессии Claude Code", "commands": "/mcp   # home — connected\n«покажи состояние сервера» → hub_status"}
+        {
+          "title": "Подключить мост",
+          "commands": "git clone https://github.com/letofftv/ClaudeRepo.git ~/ClaudeRepo\nclaude mcp add home --scope user \\\n  --env HUB_URL=http://<адрес сервера>:8787 \\\n  --env HUB_TOKEN=<токен> \\\n  -- python3 ~/ClaudeRepo/app/mcp_bridge.py"
+        },
+        {
+          "title": "Проверить",
+          "note": "в сессии Claude Code",
+          "commands": "/mcp   # home — connected\n«покажи состояние сервера» → hub_status"
+        }
       ]
     },
     {
@@ -43,9 +91,18 @@
       "where": "мак",
       "description": "Связка без облака: auto-editor (грубая резка) → ffmpeg-skill (субтитры, громкость, экспорт) → claude-video (Claude смотрит результат).",
       "steps": [
-        {"title": "ffmpeg-skill", "commands": "claude plugin marketplace add kajisho5/ffmpeg-skill\nclaude plugin install ffmpeg-skill@ffmpeg-skill"},
-        {"title": "claude-video", "commands": "claude plugin marketplace add bradautomates/claude-video\nclaude plugin install watch@claude-video"},
-        {"title": "auto-editor", "commands": "brew install auto-editor"}
+        {
+          "title": "ffmpeg-skill",
+          "commands": "claude plugin marketplace add kajisho5/ffmpeg-skill\nclaude plugin install ffmpeg-skill@ffmpeg-skill"
+        },
+        {
+          "title": "claude-video",
+          "commands": "claude plugin marketplace add bradautomates/claude-video\nclaude plugin install watch@claude-video"
+        },
+        {
+          "title": "auto-editor",
+          "commands": "brew install auto-editor"
+        }
       ]
     },
     {
@@ -54,8 +111,14 @@
       "where": "мак",
       "description": "Приёмы и блоки для своей фермы; главный пробел (живопись, лица) закрывают находки «попробовать» из каталога.",
       "steps": [
-        {"title": "product-launch-motion", "commands": "npx skills add AbubakrChan/product-launch-motion          # v2 — промо\nnpx skills add AbubakrChan/product-launch-motion/legacy   # v1 — под озвучку"},
-        {"title": "HyperFrames (попробовать как источник блоков)", "commands": "claude plugin marketplace add heygen-com/hyperframes\nclaude plugin install hyperframes@hyperframes"}
+        {
+          "title": "product-launch-motion",
+          "commands": "npx skills add AbubakrChan/product-launch-motion          # v2 — промо\nnpx skills add AbubakrChan/product-launch-motion/legacy   # v1 — под озвучку"
+        },
+        {
+          "title": "HyperFrames (попробовать как источник блоков)",
+          "commands": "claude plugin marketplace add heygen-com/hyperframes\nclaude plugin install hyperframes@hyperframes"
+        }
       ]
     },
     {
@@ -64,9 +127,19 @@
       "where": "мак",
       "description": "Свой пакет music-studio (7 навыков) + Producer Pal для Ableton Live 12.4.7.",
       "steps": [
-        {"title": "music-studio", "commands": "claude plugin marketplace add letofftv/ClaudeRepo\nclaude plugin install music-studio@clauderepo"},
-        {"title": "Producer Pal (Ableton)", "note": "Producer_Pal.amxd из релизов — на MIDI-дорожку; версию закрепить", "commands": "claude mcp add producer-pal -- npx producer-pal@<версия> --tools core,clip,track"},
-        {"title": "pytheory (гармония, MIDI)", "commands": "/plugin marketplace add kennethreitz/pytheory-skill\nuv pip install pytheory"}
+        {
+          "title": "music-studio",
+          "commands": "claude plugin marketplace add letofftv/ClaudeRepo\nclaude plugin install music-studio@clauderepo"
+        },
+        {
+          "title": "Producer Pal (Ableton)",
+          "note": "Producer_Pal.amxd из релизов — на MIDI-дорожку; версию закрепить",
+          "commands": "claude mcp add producer-pal -- npx producer-pal@<версия> --tools core,clip,track"
+        },
+        {
+          "title": "pytheory (гармония, MIDI)",
+          "commands": "/plugin marketplace add kennethreitz/pytheory-skill\nuv pip install pytheory"
+        }
       ]
     },
     {
@@ -75,11 +148,27 @@
       "where": "мак",
       "description": "Стартовый набор ≤6, ~3–4 тыс. токенов в сессии (для сравнения: отклонённый ECC — ~30 тыс.).",
       "steps": [
-        {"title": "Официальный каталог плагинов", "commands": "/plugin marketplace add anthropics/claude-plugins-official"},
-        {"title": "superpowers + Context7", "commands": "/plugin install superpowers@claude-plugins-official\n/plugin install context7@claude-plugins-official"},
-        {"title": "LSP для TypeScript и Python", "commands": "npm i -g typescript-language-server typescript pyright\n/plugin install typescript-lsp@claude-plugins-official\n/plugin install pyright-lsp@claude-plugins-official"},
-        {"title": "Playwright CLI", "commands": "npm i -g @playwright/cli@latest\nplaywright-cli install --skills"},
-        {"title": "karpathy-guidelines", "note": "текст CLAUDE.md из репозитория — в ~/.claude/CLAUDE.md", "commands": "https://github.com/forrestchang/andrej-karpathy-skills"}
+        {
+          "title": "Официальный каталог плагинов",
+          "commands": "/plugin marketplace add anthropics/claude-plugins-official"
+        },
+        {
+          "title": "superpowers + Context7",
+          "commands": "/plugin install superpowers@claude-plugins-official\n/plugin install context7@claude-plugins-official"
+        },
+        {
+          "title": "LSP для TypeScript и Python",
+          "commands": "npm i -g typescript-language-server typescript pyright\n/plugin install typescript-lsp@claude-plugins-official\n/plugin install pyright-lsp@claude-plugins-official"
+        },
+        {
+          "title": "Playwright CLI",
+          "commands": "npm i -g @playwright/cli@latest\nplaywright-cli install --skills"
+        },
+        {
+          "title": "karpathy-guidelines",
+          "note": "текст CLAUDE.md из репозитория — в ~/.claude/CLAUDE.md",
+          "commands": "https://github.com/forrestchang/andrej-karpathy-skills"
+        }
       ]
     },
     {
@@ -88,10 +177,22 @@
       "where": "мак",
       "description": "Без зависимости от санкционных сервисов: заметки локально, документы, напоминания macOS.",
       "steps": [
-        {"title": "obsidian-skills", "commands": "/plugin marketplace add kepano/obsidian-skills\n/plugin install obsidian@obsidian-skills"},
-        {"title": "document-skills (docx, pdf, pptx, xlsx)", "commands": "/plugin marketplace add anthropics/skills\n/plugin install document-skills@anthropic-agent-skills"},
-        {"title": "Напоминания и Календарь macOS", "commands": "claude mcp add apple-events -- npx -y mcp-server-apple-events@<версия>"},
-        {"title": "Claude с телефона через Telegram", "commands": "/plugin install telegram@claude-plugins-official\nclaude --channels plugin:telegram@claude-plugins-official"}
+        {
+          "title": "obsidian-skills",
+          "commands": "/plugin marketplace add kepano/obsidian-skills\n/plugin install obsidian@obsidian-skills"
+        },
+        {
+          "title": "document-skills (docx, pdf, pptx, xlsx)",
+          "commands": "/plugin marketplace add anthropics/skills\n/plugin install document-skills@anthropic-agent-skills"
+        },
+        {
+          "title": "Напоминания и Календарь macOS",
+          "commands": "claude mcp add apple-events -- npx -y mcp-server-apple-events@<версия>"
+        },
+        {
+          "title": "Claude с телефона через Telegram",
+          "commands": "/plugin install telegram@claude-plugins-official\nclaude --channels plugin:telegram@claude-plugins-official"
+        }
       ]
     },
     {
@@ -100,9 +201,18 @@
       "where": "мак + сервер",
       "description": "n8n на домашнем сервере — хребет автоматизации; ключи живут в n8n, Claude их не видит.",
       "steps": [
-        {"title": "Навыки n8n", "commands": "/plugin marketplace add n8n-io/skills\n/plugin install n8n-skills@n8n-io"},
-        {"title": "small-business-ru (выборочно)", "commands": "/plugin marketplace add ilyautov/small-business-ru"},
-        {"title": "Бот на aiogram + ЮKassa", "commands": "pip install aiogram yookassa"}
+        {
+          "title": "Навыки n8n",
+          "commands": "/plugin marketplace add n8n-io/skills\n/plugin install n8n-skills@n8n-io"
+        },
+        {
+          "title": "small-business-ru (выборочно)",
+          "commands": "/plugin marketplace add ilyautov/small-business-ru"
+        },
+        {
+          "title": "Бот на aiogram + ЮKassa",
+          "commands": "pip install aiogram yookassa"
+        }
       ]
     },
     {
@@ -111,7 +221,10 @@
       "where": "мак или сервер",
       "description": "Любой чужой навык — сначала через SkillSpector (без LLM, локально).",
       "steps": [
-        {"title": "SkillSpector в Docker", "commands": "git clone https://github.com/NVIDIA/skillspector.git && cd skillspector\ndocker build -t skillspector .\ndocker run --rm -v \"$PWD:/scan\" skillspector scan ./путь-к-навыку/ --no-llm"}
+        {
+          "title": "SkillSpector в Docker",
+          "commands": "git clone https://github.com/NVIDIA/skillspector.git && cd skillspector\ndocker build -t skillspector .\ndocker run --rm -v \"$PWD:/scan\" skillspector scan ./путь-к-навыку/ --no-llm"
+        }
       ]
     }
   ]
