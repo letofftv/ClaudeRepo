@@ -42,6 +42,11 @@ MCP-серверы, видео с советами. Здесь их разбир
 Только стандартная библиотека Python и ffmpeg. Запуск —
 `cd app && python3 -m hub`, подробности — в [`app/README.md`](app/README.md).
 
+## Переезд сервера на Ubuntu
+
+План с откатом в Windows, промпты для Claude на сервере и пакет для
+фабрики — [`common/ubuntu-migration/`](common/ubuntu-migration/README.md).
+
 ## Статусы
 
 **взять** — использовать · **попробовать** — проверить на фабрике ·
