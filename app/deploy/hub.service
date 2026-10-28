@@ -14,6 +14,9 @@ After=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=%h/ClaudeRepo/app
+# the user manager starts with a short PATH: pipx tools are in ~/.local/bin, nvidia-smi in WSL in
+# /usr/lib/wsl/lib (since 0.4.0 the hub also appends them itself)
+Environment=PATH=%h/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/lib/wsl/lib
 EnvironmentFile=%h/.config/hub/env
 ExecStart=/usr/bin/python3 -m hub --config config/hub.json
 Restart=on-failure

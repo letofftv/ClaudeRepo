@@ -136,7 +136,9 @@ def t_tools(args):
             for p in t["params"])
         state = "" if t["available"] else f"  [недоступен: {t['reason']}]"
         lines.append(f"- {t['id']} ({t['group']}): {t['title']}. {t['description']}\n  параметры: {params or 'нет'}{state}")
-    return "Параметры file — путь внутри рабочей папки пульта (inputs/… или jobs/<id>/out/…); * — обязательный.\n" + "\n".join(lines)
+    return ("Параметры file — путь внутри рабочей папки пульта (inputs/… или jobs/<id>/out/…; голое имя — файл из inputs/); "
+            "* — обязательный. device у инструментов с видеокартой: auto — видеокарта, при сбое процессор; gpu; cpu.\n"
+            + "\n".join(lines))
 
 
 def _job_text(job):
@@ -146,6 +148,10 @@ def _job_text(job):
         parts.append("Ошибка: " + job["error"])
     if job.get("returncode") is not None:
         parts.append(f"Код возврата: {job['returncode']}")
+    if job.get("device") in ("gpu", "cpu"):
+        fell_back = job["device"] == "cpu" and any(r.get("device") == "gpu" for r in job.get("runs") or [])
+        parts.append("Считалось: " + ("на видеокарте" if job["device"] == "gpu" else "на процессоре")
+                     + (" (видеокарта не справилась)" if fell_back else ""))
     parts.append("Файлы:\n" + files)
     if job.get("log"):
         parts.append("Хвост лога:\n" + job["log"][-3000:])

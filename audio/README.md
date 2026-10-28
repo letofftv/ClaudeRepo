@@ -60,7 +60,7 @@ LYR-SPEC), awesome-music-agent-skills (тонкий каталог), Cubase MCP 
 | music-studio (свой пакет) | запись вокала, сведение под минусовку, мастеринг, замеры, Ableton | **взять** | [packs/music-studio](packs/music-studio/README.md) |
 | Producer Pal | MCP для Ableton Live 12.3+ Suite — у владельца 12.4.7 Suite | **попробовать** (первым) | [producer-pal.md](finds/producer-pal.md) |
 | LiveBridge | MCP для Ableton с упором на сведение и мастеринг | **попробовать** (осторожно) | [livebridge.md](finds/livebridge.md) |
-| python-audio-separator | стемы и вокал, модели с GitHub | **попробовать** | [audio-separator.md](finds/audio-separator.md) |
+| python-audio-separator | стемы и вокал, модели с GitHub; на сервере — видеокарта, в 8 раз быстрее процессора | **взять** | [audio-separator.md](finds/audio-separator.md) |
 | Matchering 2.0 | мастеринг по референсу | **попробовать** | [matchering.md](finds/matchering.md) |
 | Pedalboard | обработка кодом с плагинами владельца | **попробовать** | [pedalboard.md](finds/pedalboard.md) |
 | ACE-Step 1.5 | наброски песен (MLX на маке), фоновая музыка для роликов | **попробовать** | [ace-step-1-5.md](finds/ace-step-1-5.md) |

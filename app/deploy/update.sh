@@ -82,7 +82,7 @@ fi
 log "updating ${OLD:0:7} -> ${NEW:0:7}"
 git merge --quiet --ff-only "$NEW"
 
-# the browser audit (test_ui_browser) is for development machines; the static UI checks still run here
+# the browser audit (test_ui_browser) is opt-in (HUB_BROWSER_TESTS=1) and stays off here; the static UI checks run
 if (cd "$APP" && HUB_SKIP_BROWSER=1 timeout 900 python3 -m unittest discover -s tests >"$WORKDIR/update-tests.log" 2>&1); then
   CHANGES="$(git log --format='%s' "$OLD..$NEW" | head -10 | tr '\n' ';' | sed 's/;$//')"
   write_status "updated" "$OLD" "$NEW" "$CHANGES"

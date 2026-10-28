@@ -5,7 +5,9 @@
     "whisper_cli": "",
     "whisper_model": "",
     "sd_bin": "",
-    "sd_model": ""
+    "sd_model": "",
+    "separator_models": "{workdir}/models/audio-separator",
+    "piper_voices": "{workdir}/models/piper"
   },
   "tools": [
     {
@@ -390,7 +392,7 @@
       "id": "vertical_9x16",
       "title": "Кадрирование 9:16 (1080×1920)",
       "group": "video",
-      "description": "Заполняет вертикальный кадр с обрезкой краёв — для шортсов и клипов.",
+      "description": "Заполняет вертикальный кадр с обрезкой краёв — для шортсов и клипов. На видеокарте (NVENC) в 1,4 раза быстрее, файл крупнее на ~45 % при том же качестве.",
       "command": [
         "ffmpeg",
         "-hide_banner",
@@ -436,13 +438,42 @@
       "requires": [
         "ffmpeg"
       ],
-      "timeout": 7200
+      "timeout": 7200,
+      "gpu": {
+        "requires": [
+          "nvidia-smi"
+        ],
+        "command": [
+          "ffmpeg",
+          "-hide_banner",
+          "-y",
+          "-hwaccel",
+          "cuda",
+          "-i",
+          "{input}",
+          "-vf",
+          "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920",
+          "-c:v",
+          "h264_nvenc",
+          "-preset",
+          "p5",
+          "-cq",
+          "{crf}",
+          "-pix_fmt",
+          "yuv420p",
+          "-c:a",
+          "aac",
+          "-b:a",
+          "192k",
+          "{out}/vertical.mp4"
+        ]
+      }
     },
     {
       "id": "burn_subtitles",
       "title": "Вшить субтитры",
       "group": "video",
-      "description": "Субтитры .srt или .ass поверх видео (для .srt — размер шрифта).",
+      "description": "Субтитры .srt или .ass поверх видео (для .srt — размер шрифта). На видеокарте — в 2,5 раза быстрее.",
       "command": [
         "ffmpeg",
         "-hide_banner",
@@ -496,13 +527,40 @@
       "requires": [
         "ffmpeg"
       ],
-      "timeout": 7200
+      "timeout": 7200,
+      "gpu": {
+        "requires": [
+          "nvidia-smi"
+        ],
+        "command": [
+          "ffmpeg",
+          "-hide_banner",
+          "-y",
+          "-hwaccel",
+          "cuda",
+          "-i",
+          "{input}",
+          "-vf",
+          "subtitles={subs}:force_style=Fontsize={font_size}",
+          "-c:v",
+          "h264_nvenc",
+          "-preset",
+          "p5",
+          "-cq",
+          "20",
+          "-pix_fmt",
+          "yuv420p",
+          "-c:a",
+          "copy",
+          "{out}/subtitled.mp4"
+        ]
+      }
     },
     {
       "id": "contact_sheet",
       "title": "Контактный лист",
       "group": "video",
-      "description": "Сетка кадров из видео одной картинкой — чтобы быстро оценить ролик (и показать Claude через MCP).",
+      "description": "Сетка кадров из видео одной картинкой — чтобы быстро оценить ролик (и показать Claude через MCP). Видеокарта выигрывает на длинных роликах.",
       "command": [
         "ffmpeg",
         "-hide_banner",
@@ -559,7 +617,30 @@
       "requires": [
         "ffmpeg"
       ],
-      "timeout": 1800
+      "timeout": 1800,
+      "gpu": {
+        "requires": [
+          "nvidia-smi"
+        ],
+        "command": [
+          "ffmpeg",
+          "-hide_banner",
+          "-y",
+          "-hwaccel",
+          "cuda",
+          "-i",
+          "{input}",
+          "-vf",
+          "fps=1/{every},scale=360:-1,tile={cols}x{rows}",
+          "-frames:v",
+          "1",
+          "-q:v",
+          "3",
+          "-update",
+          "1",
+          "{out}/sheet.jpg"
+        ]
+      }
     },
     {
       "id": "thumbnail",
@@ -720,12 +801,13 @@
       "id": "auto_editor_cut",
       "title": "Вырезать тишину (auto-editor)",
       "group": "video",
-      "description": "Убирает паузы из записи экрана или разговора. Без платного ключа — до 3200×1800.",
+      "description": "Убирает паузы из записи экрана или разговора. Без платного ключа — до 3200×1800. На видеокарте — в 3 раза быстрее (6 Мбит/с).",
       "command": [
         "auto-editor",
         "{input}",
         "--margin",
         "{margin}s",
+        "--no-open",
         "-o",
         "{out}/cut.mp4"
       ],
@@ -752,7 +834,25 @@
       "requires": [
         "auto-editor"
       ],
-      "timeout": 7200
+      "timeout": 7200,
+      "gpu": {
+        "requires": [
+          "nvidia-smi"
+        ],
+        "command": [
+          "auto-editor",
+          "{input}",
+          "--margin",
+          "{margin}s",
+          "--no-open",
+          "-c:v",
+          "h264_nvenc",
+          "-b:v",
+          "6M",
+          "-o",
+          "{out}/cut.mp4"
+        ]
+      }
     },
     {
       "id": "auto_editor_premiere",
@@ -764,6 +864,7 @@
         "{input}",
         "--export",
         "premiere",
+        "--no-open",
         "-o",
         "{out}/timeline.xml"
       ],
@@ -821,7 +922,7 @@
       "id": "upscale_video2x",
       "title": "Апскейл видео (Video2X, Vulkan)",
       "group": "generation",
-      "description": "Real-ESRGAN для анимации. Флаги сверены по документации Video2X 6 — проверить на сервере.",
+      "description": "Real-ESRGAN для анимации. Нужен Vulkan: в WSL на этом сервере он не работает — инструмент для Ubuntu без WSL. Флаги сверены по документации Video2X 6.",
       "command": [
         "video2x",
         "-i",
@@ -866,12 +967,14 @@
       "id": "stems",
       "title": "Разделить на стемы (audio-separator)",
       "group": "generation",
-      "description": "Вокал и инструментал моделью по умолчанию; модели — с GitHub. Флаги сверить с audio-separator --help.",
+      "description": "Вокал и инструментал (FLAC) моделью по умолчанию. На видеокарте в 8 раз быстрее процессора (15 с трека: 35 с против 4 мин 53 с). Модели качаются с GitHub один раз в папку из переменной separator_models.",
       "command": [
         "audio-separator",
         "{input}",
         "--output_dir",
-        "{out}"
+        "{out}",
+        "--model_file_dir",
+        "{separator_models}"
       ],
       "params": [
         {
@@ -887,11 +990,19 @@
       "requires": [
         "audio-separator"
       ],
-      "timeout": 14400
+      "timeout": 14400,
+      "gpu": {
+        "requires": [
+          "nvidia-smi"
+        ],
+        "cpu_env": {
+          "CUDA_VISIBLE_DEVICES": ""
+        }
+      }
     },
     {
       "id": "tts",
-      "title": "Озвучка текста (OpenAI-совместимый сервер)",
+      "title": "Озвучка текста (свой сервер, OpenAI API)",
       "group": "generation",
       "description": "Текст → WAV через локальный сервер озвучки (omnivoice.cpp, qwentts.cpp, обёртка Silero). Адрес — переменная tts_url в config/tools.local.json.",
       "command": [
@@ -926,10 +1037,57 @@
       "timeout": 3600
     },
     {
-      "id": "whisper",
-      "title": "Распознать речь в субтитры (whisper.cpp)",
+      "id": "tts_piper",
+      "title": "Озвучка текста (Piper, процессор)",
       "group": "generation",
-      "description": "SRT и VTT из WAV 16 кГц (подготовить инструментом «В WAV 16 кГц»). Пути к whisper-cli и модели — в config/tools.local.json; если на сервере другой Whisper — заменить команду там же.",
+      "description": "Текст → WAV русскими голосами Piper без сервера: ONNX на процессоре, быстрее реального времени. Голоса — пары файлов .onnx и .onnx.json в папке из переменной piper_voices. Абзацы разделяются паузой.",
+      "command": [
+        "{python}",
+        "{repo}/app/tools/tts_piper.py",
+        "--voices-dir",
+        "{piper_voices}",
+        "--voice",
+        "{voice}",
+        "--speed",
+        "{speed}",
+        "--text-file",
+        "{text}",
+        "--out",
+        "{out}/speech.wav"
+      ],
+      "params": [
+        {
+          "name": "text",
+          "type": "text",
+          "label": "Текст",
+          "required": true
+        },
+        {
+          "name": "voice",
+          "type": "string",
+          "label": "Голос",
+          "default": "ru_RU-irina-medium",
+          "pattern": "[A-Za-z0-9_.-]{1,64}"
+        },
+        {
+          "name": "speed",
+          "type": "number",
+          "label": "Темп",
+          "default": 1,
+          "min": 0.5,
+          "max": 2
+        }
+      ],
+      "requires": [
+        "piper"
+      ],
+      "timeout": 3600
+    },
+    {
+      "id": "whisper",
+      "title": "Распознать речь в субтитры (Whisper)",
+      "group": "generation",
+      "description": "SRT и VTT. По умолчанию whisper.cpp (нужен WAV 16 кГц — инструмент «В WAV 16 кГц»); faster-whisper или другой движок подключается в config/tools.local.json через обёртку app/tools/whisper_subs.py — она делает SRT/VTT из JSON и понимает «auto».",
       "command": [
         "{whisper_cli}",
         "-m",
@@ -947,7 +1105,7 @@
         {
           "name": "input",
           "type": "file",
-          "label": "WAV 16 кГц",
+          "label": "Аудио с речью",
           "required": true,
           "accept": [
             "audio"
@@ -962,7 +1120,12 @@
             "en",
             "auto"
           ],
-          "default": "ru"
+          "default": "ru",
+          "labels": {
+            "ru": "Русский",
+            "en": "Английский",
+            "auto": "Определить автоматически"
+          }
         }
       ],
       "timeout": 14400

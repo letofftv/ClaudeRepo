@@ -6,6 +6,9 @@ from pathlib import Path
 
 APP_DIR = Path(__file__).resolve().parent.parent
 REPO_ROOT = APP_DIR.parent
+# systemd user units start with a short PATH: without these the hub misses pipx tools
+# (~/.local/bin) and, in WSL, nvidia-smi (/usr/lib/wsl/lib) — and so does every job
+EXTRA_PATH = ("~/.local/bin", "/usr/local/bin", "/usr/lib/wsl/lib", "/snap/bin")
 
 DEFAULTS = {
     "bind": "127.0.0.1",
@@ -26,6 +29,16 @@ DEFAULTS = {
     "alerts": {},               # threshold overrides, see hub/metrics.py DEFAULT_THRESHOLDS
     "links": [],                # other panels shown on the Server page: {"title", "url"} (Beszel, Dozzle…)
 }
+
+
+def extend_path(extra=EXTRA_PATH):
+    """Append existing tool folders missing from PATH; returns the added ones."""
+    current = [p for p in os.environ.get("PATH", "").split(os.pathsep) if p]
+    added = [d for d in dict.fromkeys(os.path.expanduser(p) for p in extra)
+             if d not in current and os.path.isdir(d)]
+    if added:
+        os.environ["PATH"] = os.pathsep.join(current + added)
+    return added
 
 
 class Settings(dict):

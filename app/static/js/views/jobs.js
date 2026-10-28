@@ -5,6 +5,15 @@ import { api, live, subscribe, jobRow, stateBadge, progressText, mediaPreview, d
 
 export const title = "Задачи";
 
+const DEVICE = { gpu: "на видеокарте", cpu: "на процессоре" };
+
+/** Where the job ran; a CPU run after a failed GPU attempt says so. */
+function deviceText(job) {
+  if (!DEVICE[job.device]) return "";
+  const fellBack = job.device === "cpu" && (job.runs || []).some((r) => r.device === "gpu");
+  return ` · ${DEVICE[job.device]}${fellBack ? " (видеокарта не справилась)" : ""}`;
+}
+
 export function render(main, params) {
   const jobId = params.id || null;
   const layout = el("div", { class: `jobs-layout${jobId ? " has-detail" : ""}` });
@@ -66,7 +75,7 @@ export function render(main, params) {
       el("div", { class: "card stack" },
         el("div", { class: "row top" }, icon(toolIcon(job.tool), { cls: "lg" }), el("div", { class: "grow stack gap-1" },
           el("h3", {}, job.title), el("span", { class: "small secondary" },
-            `создана ${fmt.when(job.created)}${duration !== null ? ` · ${running ? "идёт" : "заняла"} ${fmt.duration(duration)}` : ""}${job.returncode !== null && job.returncode !== undefined ? ` · код ${job.returncode}` : ""}`)),
+            `создана ${fmt.when(job.created)}${duration !== null ? ` · ${running ? "идёт" : "заняла"} ${fmt.duration(duration)}` : ""}${deviceText(job)}${job.returncode !== null && job.returncode !== undefined ? ` · код ${job.returncode}` : ""}`)),
           stateBadge(job.state)),
         running ? el("div", { class: "job-progress" }, el("div", { class: job.progress ? "progress" : "progress indeterminate" }, progressBar),
           el("span", { class: "small secondary nowrap" }, progressText(job.progress))) : null,

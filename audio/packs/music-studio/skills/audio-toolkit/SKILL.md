@@ -15,9 +15,11 @@ CLI и Python-библиотеки дешевле по контексту, че�
 
 ## Разделение на стемы и вокал
 
-- **python-audio-separator** (MIT, `pip install "audio-separator[cpu]"` —
-  вариант для Apple Silicon уточнить в README): CLI и Python API; на маке —
-  MPS и CoreML. Современные модели RoFormer (becruily, unwa, gabox) и
+- **python-audio-separator** (MIT, `pip install "audio-separator[cpu]"`:
+  на Apple Silicon тянет PyTorch ≥ 2.13 с MPS, `[cpu]` — onnxruntime с
+  CoreML; по pyproject и коду выбора устройства, на маке не запускалось):
+  CLI и Python API. Модели держать в постоянной папке
+  (`--model_file_dir`), по умолчанию они в `/tmp`. Современные модели RoFormer (becruily, unwa, gabox) и
   ансамбли: вокал ~11,3 SDR, инструментал ~17,5 SDR. **Модели качаются с
   GitHub**, не с Hugging Face — важно для загрузок из России. Список
   моделей: `audio-separator --list_models --list_format=json`.
@@ -116,6 +118,10 @@ CLI и Python-библиотеки дешевле по контексту, че�
 
 ## Сервер фабрики (GTX 1050 Ti)
 
-Разделение — ONNX-модели audio-separator (onnxruntime-gpu на CUDA 12) или
-BSRoformer.cpp (GGML, CUDA/Vulkan, без PyTorch). Генеративное — не влезает.
-Правила карты — в `CLAUDE.md` репозитория ClaudeRepo.
+Разделение — audio-separator на PyTorch 2.14.1+cu126: проверено на сервере
+2026-10-28, в 8 раз быстрее процессора (15 с трека — 35 с против 4 мин 53 с),
+пик видеопамяти ~3 ГБ. Запускать через пульт (инструмент `stems`, откат на
+процессор встроен). Torch — только из индекса cu126, установка — в карточке
+`audio/finds/audio-separator.md`. Без PyTorch на будущее — BSRoformer.cpp
+(GGML). Генеративное — не влезает. Правила карты — в `CLAUDE.md`
+репозитория ClaudeRepo.

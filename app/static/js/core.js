@@ -281,11 +281,11 @@ function fileField(p, preset, files) {
 function fieldFor(p, preset, files) {
   const id = `f-${p.name}-${Math.random().toString(36).slice(2, 7)}`;
   let control;
-  let hint = "";
+  let hint = p.hint || "";
   if (p.type === "file") {
     ({ select: control, hint } = fileField(p, preset, files));
   } else if (p.type === "choice") {
-    control = el("select", { class: "input" }, p.choices.map((c) => el("option", { value: c, selected: String(preset ?? p.default) === c || null }, c)));
+    control = el("select", { class: "input" }, p.choices.map((c) => el("option", { value: c, selected: String(preset ?? p.default) === c || null }, p.labels?.[c] ?? c)));
   } else if (p.type === "number") {
     control = el("input", { class: "input", type: "number", inputmode: "decimal", value: preset ?? p.default ?? "",
       min: p.min, max: p.max, step: p.integer ? 1 : "any", required: p.required || null });
@@ -304,7 +304,9 @@ function fieldFor(p, preset, files) {
 /** Form for one tool in a sheet; on success opens the new job. */
 export async function runSheet(tool, preset = {}) {
   const files = tool.params.some((p) => p.type === "file") ? await api.get("/api/files?scope=all") : [];
-  const fields = tool.params.map((p) => fieldFor(p, preset[p.name], files));
+  const noGpu = tool.gpu && !tool.gpu.available;
+  const fields = tool.params.map((p) => fieldFor(p.name === "device" && noGpu
+    ? { ...p, hint: "Видеокарта сейчас недоступна — посчитается на процессоре" } : p, preset[p.name], files));
   const formId = `run-${tool.id}`;
   const error = el("p", { class: "error-text", role: "alert" });
   const form = el("form", { class: "stack gap-4", id: formId },

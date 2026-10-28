@@ -1,5 +1,6 @@
 """Background job runner: one thread pool, one folder per job, logs on disk."""
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -10,12 +11,13 @@ import uuid
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
-from .tools import build_argv, tool_status
+from .tools import ParamError, build_runs, tool_status
 
 STATES = ("queued", "running", "done", "failed", "cancelled")
 DURATION = re.compile(r"Duration: (\d+):(\d+):(\d+(?:\.\d+)?)")
 TIME = re.compile(r"time=(\d+):(\d+):(\d+(?:\.\d+)?)")
 SPEED = re.compile(r"speed=\s*([\d.]+)x")
+FALLBACK_NOTE = "\n--- Видеокарта не справилась (код {rc}) — повтор на процессоре ---\n\n"
 
 
 def _seconds(match):
@@ -62,13 +64,17 @@ class JobManager:
         job_id = time.strftime("%Y%m%d-%H%M%S-") + uuid.uuid4().hex[:6]
         job_dir = self.root / job_id
         (job_dir / "out").mkdir(parents=True)
-        argv = build_argv(tool, params or {}, self.variables, self.settings.workdir,
-                          job_dir, self.settings.repo_root, sys.executable)
+        try:
+            runs = build_runs(tool, params or {}, self.variables, self.settings.workdir,
+                              job_dir, self.settings.repo_root, sys.executable)
+        except ParamError:
+            shutil.rmtree(job_dir, ignore_errors=True)
+            raise
         job = {
             "id": job_id, "tool": tool_id, "title": tool.get("title", tool_id),
-            "params": params or {}, "argv": argv, "state": "queued",
+            "params": params or {}, "argv": runs[0]["argv"], "plan": runs, "state": "queued",
             "created": time.time(), "started": None, "finished": None,
-            "returncode": None, "error": None,
+            "returncode": None, "error": None, "device": runs[0]["device"] or None, "runs": [],
         }
         with self.lock:
             self.jobs[job_id] = job
@@ -77,6 +83,7 @@ class JobManager:
         return job
 
     def _run(self, job, timeout):
+        """Run the plan: the GPU variant first (if any), the CPU command after a failure."""
         job_dir = self.root / job["id"]
         with self.lock:
             if job["state"] == "cancelled":
@@ -84,28 +91,50 @@ class JobManager:
             job["state"] = "running"
             job["started"] = time.time()
         self._save(job)
+        deadline = time.monotonic() + timeout
+        plan = job.get("plan") or [{"device": "", "argv": job["argv"], "env": {}}]
         log_path = job_dir / "log.txt"
+        rc, error = None, None
         try:
             with open(log_path, "wb") as log:
-                proc = subprocess.Popen(job["argv"], cwd=str(job_dir), stdout=log,
-                                        stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
-                with self.lock:
-                    self.procs[job["id"]] = proc
-                try:
-                    rc = proc.wait(timeout=timeout)
-                except subprocess.TimeoutExpired:
-                    proc.kill()
-                    proc.wait()
-                    rc = None
-                    job["error"] = f"превышено время ({timeout} с)"
-            with self.lock:
-                self.procs.pop(job["id"], None)
-                job["returncode"] = rc
-                if job["state"] != "cancelled":
-                    job["state"] = "done" if rc == 0 else "failed"
+                for i, run in enumerate(plan):
+                    if i:
+                        log.write(FALLBACK_NOTE.format(rc=rc).encode("utf-8"))
+                        log.flush()
+                    env = dict(os.environ, **run["env"]) if run.get("env") else None
+                    with self.lock:
+                        if job["state"] == "cancelled":
+                            break
+                        job["device"] = run.get("device") or None
+                        try:
+                            proc = subprocess.Popen(run["argv"], cwd=str(job_dir), stdout=log, env=env,
+                                                    stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL)
+                        except OSError as exc:  # the program is missing: the next variant may still work
+                            proc, rc, error = None, 127, str(exc)
+                            log.write(f"{exc}\n".encode("utf-8"))
+                            log.flush()
+                        else:
+                            self.procs[job["id"]] = proc
+                    if proc is not None:
+                        self._save(job)
+                        error = None
+                        try:
+                            rc = proc.wait(timeout=max(1.0, deadline - time.monotonic()))
+                        except subprocess.TimeoutExpired:
+                            proc.kill()
+                            proc.wait()
+                            rc, error = None, f"превышено время ({timeout} с)"
+                    job["runs"] = [*job.get("runs", []), {"device": run.get("device") or None, "returncode": rc}]
+                    if rc == 0 or rc is None or job["state"] == "cancelled":
+                        break
         except OSError as exc:
-            job["state"] = "failed"
-            job["error"] = str(exc)
+            rc, error = None, str(exc)
+        with self.lock:
+            self.procs.pop(job["id"], None)
+            job["returncode"] = rc
+            job["error"] = error
+            if job["state"] != "cancelled":
+                job["state"] = "done" if rc == 0 else "failed"
         job["finished"] = time.time()
         self._save(job)
 
@@ -216,7 +245,7 @@ class JobManager:
         out = []
         for j in jobs[:limit]:
             row = {k: j.get(k) for k in ("id", "tool", "title", "state", "created", "started", "finished",
-                                         "returncode", "error")}
+                                         "returncode", "error", "device")}
             if j["state"] == "running":
                 row["progress"] = self.progress(j["id"])
             out.append(row)

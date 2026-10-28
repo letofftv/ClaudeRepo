@@ -40,13 +40,14 @@ MoviePy и editly (дублируют ферму), heygen-com/skills (облач
 ## Что добавить к своей ферме
 
 Ядро уже есть: своя ферма (сцены кодом → кадры в Chromium → ffmpeg), Whisper
-large-v3 на видеокарте, сетка долей, маски Apple Vision.
+(faster-whisper large-v3-turbo) на видеокарте, сетка долей, маски Apple Vision.
 
 1. **Playwright MCP** — запись настоящих интерфейсов с анимированным курсором
    для обучающих роликов.
 2. **Озвучка** — **Silero** на процессоре (основная, русский) или
    **omnivoice.cpp** на видеокарте, если нужен клон постоянного голоса.
-3. **Video2X** — апскейл и плавность кадров на Vulkan.
+3. **Video2X** — апскейл и плавность кадров на Vulkan, после переезда на
+   Ubuntu: в WSL на сервере Vulkan не работает.
 
 ## Находки
 
@@ -59,19 +60,21 @@ large-v3 на видеокарте, сетка долей, маски Apple Visi
 | Silero TTS v5 | основная русская озвучка, на CPU | **взять** | [silero-tts.md](finds/silero-tts.md) |
 | Playwright MCP (видео) | запись настоящих интерфейсов с курсором | **попробовать** | [playwright-mcp-video.md](finds/playwright-mcp-video.md) |
 | omnivoice.cpp | русская озвучка с клоном голоса на GPU | **попробовать** | [omnivoice-cpp.md](finds/omnivoice-cpp.md) |
-| Video2X | апскейл и интерполяция кадров на Vulkan | **попробовать** | [video2x.md](finds/video2x.md) |
+| Video2X | апскейл и интерполяция кадров на Vulkan | позже (после переезда на Ubuntu: в WSL нет Vulkan) | [video2x.md](finds/video2x.md) |
+| Piper | черновая русская озвучка на CPU без сервера; в пульте — `tts_piper` | **попробовать** (запасной) | [piper.md](finds/piper.md) |
 | ESpeech-TTS-1 | качественный русский с клоном (F5-TTS) | **попробовать** (запасной) | [espeech-tts.md](finds/espeech-tts.md) |
 | GigaAM v3 | точное распознавание русского, если Whisper не устроит | позже | [gigaam.md](finds/gigaam.md) |
 | Orkas-VideoStudio | монтаж поверх HyperFrames — пересекается с фермой | позже (идеи) | [orkas-videostudio.md](finds/orkas-videostudio.md) |
 | qwentts.cpp | озвучка на GPU, Pascal поддержан официально; русский слабее | позже (запасной) | [qwentts-cpp.md](finds/qwentts-cpp.md) |
 | digitalsamba video toolkit | навык записи браузера, список открытых моделей | позже (по частям) | [digitalsamba-video-toolkit.md](finds/digitalsamba-video-toolkit.md) |
 | Claude-Code-Video-Toolkit | список ссылок (разобран) | источник | [claude-code-video-toolkit.md](finds/claude-code-video-toolkit.md) |
-| whisper.cpp на CUDA 12 | субтитры на видеокарте | не нужно — Whisper large-v3 уже работает | [whisper-cpp-cuda.md](finds/whisper-cpp-cuda.md) |
+| whisper.cpp на CUDA 12 | субтитры на видеокарте | не нужно — на сервере faster-whisper large-v3-turbo (Docker), в пульт подключён обёрткой | [whisper-cpp-cuda.md](finds/whisper-cpp-cuda.md) |
 
 **Без карточек** (подробности — в исследовании ниже):
-- **Позже:** Speaches + Piper (запасная озвучка на CPU), Chatterbox
-  Multilingual (на грани 4 ГБ, водяной знак), DeepFilterNet и
-  audio-separator (очистка голоса), Applio/RVC (единый голос диктора),
+- **Позже:** Speaches (сервер с Piper — не нужен, Piper в пульте вызывается
+  напрямую), Chatterbox Multilingual (на грани 4 ГБ, водяной знак),
+  DeepFilterNet (очистка голоса; audio-separator уже взят —
+  [`audio/finds/audio-separator.md`](../audio/finds/audio-separator.md)), Applio/RVC (единый голос диктора),
   MuseTalk 1.5 (говорящая голова — может не влезть), rembg и Robust Video
   Matting (удаление фона).
 - **Позже, с некоммерческими весами** (допустимы, пока ролики не

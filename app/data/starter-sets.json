@@ -1,5 +1,5 @@
 {
-  "updated": "2026-10-27",
+  "updated": "2026-10-28",
   "sets": [
     {
       "id": "hub-server",
@@ -18,12 +18,13 @@
         },
         {
           "title": "Доступ из домашней сети или VPN",
-          "note": "по умолчанию пульт слушает только 127.0.0.1; адрес VPN-интерфейса вписать в bind в config/hub.json, наружу в интернет порт не открывать",
+          "note": "по умолчанию пульт слушает только 127.0.0.1; адрес VPN-интерфейса вписать в bind в config/hub.json, наружу в интернет порт не открывать. Пока доступа нет — SSH-туннель: ssh -N -L 8787:127.0.0.1:8787 <сервер>",
           "commands": "\"bind\": \"<адрес сервера в VPN>\""
         },
         {
           "title": "Пути к Whisper, озвучке и генерации картинок",
-          "commands": "cp config/tools.local.example.json config/tools.local.json\n# вписать пути к whisper-cli, модели, sd, адрес сервера озвучки"
+          "commands": "cp config/tools.local.example.json config/tools.local.json\n# вписать пути к whisper-cli или команду своего Whisper, sd, адрес сервера озвучки, папку голосов Piper",
+          "note": "свой Whisper (faster-whisper, Docker) — через обёртку app/tools/whisper_subs.py, пример в tools.local.example.json; варианты для видеокарты уже в tools.json"
         },
         {
           "title": "Автозапуск и автообновление (systemd, без root)",
@@ -47,9 +48,9 @@
           "commands": "pipx install \"scenedetect[opencv-headless]\""
         },
         {
-          "title": "Стемы (вокал / минус)",
-          "note": "на сервере — CPU-вариант; модели качаются с GitHub",
-          "commands": "pipx install \"audio-separator[cpu]\""
+          "title": "Стемы (вокал / минус) на видеокарте",
+          "note": "PyTorch только cu126 и не новее 2.14 — в 8 раз быстрее процессора; diffq собирается из исходников, компилятор нужен на время установки; без видеокарты torch — из https://download.pytorch.org/whl/cpu",
+          "commands": "sudo apt install -y build-essential python3-dev   # на время установки\npipx install \"audio-separator[cpu]==0.47.1\"\npipx runpip audio-separator install \"torch==2.14.1\" --index-url https://download.pytorch.org/whl/cu126\npipx inject audio-separator audioread"
         },
         {
           "title": "Субтитры: whisper.cpp на видеокарте",
@@ -57,13 +58,23 @@
           "commands": "git clone https://github.com/ggml-org/whisper.cpp ~/src/whisper.cpp\ncd ~/src/whisper.cpp\ncmake -B build -DGGML_CUDA=1 && cmake --build build -j --config Release\n# в tools.local.json: whisper_cli = ~/src/whisper.cpp/build/bin/whisper-cli"
         },
         {
+          "title": "Субтитры: свой Whisper (faster-whisper, Docker)",
+          "note": "обёртка сама добавит флаг языка (при «auto» — нет) и сделает SRT/VTT из JSON движка",
+          "commands": "# в tools.local.json у whisper:\n\"command\": [\"{python}\", \"{repo}/app/tools/whisper_subs.py\", \"--out\", \"{out}\", \"--lang\", \"{lang}\", \"--lang-flag=--lang\", \"--\", \"docker\", \"run\", \"--rm\", \"--gpus\", \"all\", \"-v\", \"{workdir}:{workdir}\", \"<образ>\", \"{input}\", \"{out}\"]"
+        },
+        {
+          "title": "Озвучка: Piper на процессоре",
+          "note": "лёгкие русские голоса без сервера (irina, denis, dmitri, ruslan); голоса — с Hugging Face, если сервер его не видит — скачать на маке и скопировать оба файла",
+          "commands": "pipx install piper-tts\n~/.local/share/pipx/venvs/piper-tts/bin/python -m piper.download_voices ru_RU-irina-medium --data-dir ~/hub-work/models/piper"
+        },
+        {
           "title": "Картинки: stable-diffusion.cpp",
-          "note": "без PyTorch; бинарник может называться sd или sd-cli — путь вписать в sd_bin",
-          "commands": "git clone --recursive https://github.com/leejet/stable-diffusion.cpp ~/src/sd.cpp\ncd ~/src/sd.cpp\ncmake -B build -DSD_CUDA=ON && cmake --build build -j --config Release"
+          "note": "без PyTorch; в WSL нужен CUDA Toolkit 12.x из репозитория NVIDIA для WSL-Ubuntu, без драйвера (несколько ГБ) — или сборка в Docker; бинарник sd или sd-cli — путь в sd_bin",
+          "commands": "git clone --recursive https://github.com/leejet/stable-diffusion.cpp ~/src/sd.cpp\ncd ~/src/sd.cpp\ncmake -B build -DSD_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=61 && cmake --build build -j --config Release"
         },
         {
           "title": "Апскейл: Video2X (Vulkan)",
-          "note": "AppImage или пакет из релизов GitHub; флаги сверить с video2x --help",
+          "note": "нужен Vulkan: в WSL на этом сервере он не работает — ставить после переезда на Ubuntu; AppImage или пакет из релизов GitHub, флаги сверить с video2x --help",
           "commands": "video2x --help"
         }
       ]

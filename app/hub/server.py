@@ -15,7 +15,7 @@ from urllib.parse import parse_qs, unquote, urlencode, urlparse
 
 from . import __version__
 from .catalog import build_catalog
-from .config import APP_DIR, load_settings
+from .config import APP_DIR, extend_path, load_settings
 from .jobs import JobManager
 from .metrics import Sampler
 from .sysinfo import repo_info, update_status
@@ -372,6 +372,7 @@ def main(argv=None):
     ap.add_argument("--port", type=int)
     ap.add_argument("--workdir")
     args = ap.parse_args(argv)
+    added = extend_path()
     settings = load_settings(args.config, {"bind": args.bind, "port": args.port, "workdir": args.workdir})
     server, hub = make_server(settings)
     print(f"Пульт запущен: http://{settings.bind}:{settings.port}/  (рабочая папка {settings.workdir})")
@@ -379,6 +380,8 @@ def main(argv=None):
         print(f"HUB_TOKEN не задан — временный токен на этот запуск: {settings.token}")
     avail = sum(public_tool(t, hub.variables)["available"] for t in hub.tools)
     print(f"Инструментов доступно: {avail} из {len(hub.tools)}")
+    if added:
+        print("Добавлено в PATH: " + ", ".join(added))
     def _terminate(signum, frame):  # systemd stops with SIGTERM: save history on the way out
         raise KeyboardInterrupt
     signal.signal(signal.SIGTERM, _terminate)

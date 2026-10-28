@@ -21,9 +21,9 @@ from pathlib import Path
 APP = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(APP))
 
-from hub.config import load_settings  # noqa: E402
+from hub.config import extend_path, load_settings  # noqa: E402
 from hub.server import make_server  # noqa: E402
-from hub.tools import ParamError, build_argv  # noqa: E402
+from hub.tools import ParamError, build_argv, build_runs, load_tools  # noqa: E402
 
 HAS_FFMPEG = bool(shutil.which("ffmpeg"))
 TOKEN = "test-token-123"
@@ -73,6 +73,15 @@ class HubTest(unittest.TestCase):
                  "params": [{"name": "a", "type": "string", "required": True},
                             {"name": "opt", "type": "string"},
                             {"name": "b", "type": "string", "default": "x y;z"}]},
+                {"id": "show_file", "title": "cat", "command": ["cat", "{f}"],
+                 "params": [{"name": "f", "type": "file", "required": True, "accept": ["text"]}]},
+                # "GPU" that always fails and a CPU run that reports the env it got
+                {"id": "gpu_fallback", "title": "gpu", "params": [],
+                 "command": ["{python}", "-c", "import os; print('CPU', repr(os.environ.get('CUDA_VISIBLE_DEVICES', 'unset')))"],
+                 "gpu": {"requires": ["python3"], "cpu_env": {"CUDA_VISIBLE_DEVICES": ""},
+                         "command": ["{python}", "-c", "import sys; print('GPU try'); sys.exit(3)"]}},
+                {"id": "gpu_missing", "title": "no gpu", "params": [], "command": ["echo", "cpu only"],
+                 "gpu": {"requires": ["definitely-missing-binary-xyz"], "command": ["echo", "never"]}},
             ],
         }
         local_file = cls.tmp / "tools.local.json"
@@ -254,6 +263,69 @@ class HubTest(unittest.TestCase):
             build_argv(tool, {"a": "--evil"}, {}, self.settings.workdir, job_dir, "/r", "py")
         with self.assertRaises(ParamError):
             build_argv(tool, {}, {}, self.settings.workdir, job_dir, "/r", "py")
+
+    def test_bare_file_name_means_inputs(self):
+        note = self.tmp / "note one.txt"
+        note.write_text("bare name works", encoding="utf-8")
+        self.assertEqual(self.upload(note)["path"], "inputs/note_one.txt")
+        for name in ("note_one.txt", "note one.txt", "inputs/note_one.txt"):
+            with self.subTest(name=name):
+                job = self.run_job("show_file", {"f": name})
+                self.assertEqual(job["state"], "done", job["log"])
+                self.assertIn("bare name works", job["log"])
+        code, err = self.json_call("POST", "/api/jobs", {"tool": "show_file", "params": {"f": "nope.txt"}})
+        self.assertEqual(code, 400)
+        self.assertIn("inputs/nope.txt", err["error"])
+        for bad in ("..", ".", "../note one.txt"):  # the last one exists, but outside the work folder
+            self.assertEqual(self.json_call("POST", "/api/jobs", {"tool": "show_file", "params": {"f": bad}})[0], 400)
+
+    def test_gpu_variant_falls_back_to_cpu(self):
+        _, tools = self.json_call("GET", "/api/tools")
+        tool = next(t for t in tools if t["id"] == "gpu_fallback")
+        self.assertEqual(tool["gpu"], {"available": True, "reason": ""})
+        device = [p for p in tool["params"] if p["name"] == "device"]
+        self.assertEqual(len(device), 1)
+        self.assertEqual(device[0]["default"], "auto")
+        self.assertEqual(set(device[0]["labels"]), {"auto", "gpu", "cpu"})
+
+        job = self.run_job("gpu_fallback", {})
+        self.assertEqual(job["state"], "done", job["log"])
+        self.assertEqual(job["runs"], [{"device": "gpu", "returncode": 3}, {"device": "cpu", "returncode": 0}])
+        self.assertEqual(job["device"], "cpu")
+        log = job["log"]
+        self.assertLess(log.index("GPU try"), log.index("Видеокарта не справилась (код 3)"))
+        self.assertIn("CPU ''", log)  # cpu_env hides the card from the CPU run
+        _, jobs = self.json_call("GET", "/api/jobs")
+        self.assertEqual(next(j for j in jobs if j["id"] == job["id"])["device"], "cpu")
+
+        job = self.run_job("gpu_fallback", {"device": "gpu"})
+        self.assertEqual(job["state"], "failed")
+        self.assertEqual(job["runs"], [{"device": "gpu", "returncode": 3}])
+        self.assertNotIn("CPU", job["log"])
+
+        job = self.run_job("gpu_fallback", {"device": "cpu"})
+        self.assertEqual(job["state"], "done", job["log"])
+        self.assertEqual(job["runs"], [{"device": "cpu", "returncode": 0}])
+        self.assertNotIn("GPU try", job["log"])
+
+        code, err = self.json_call("POST", "/api/jobs", {"tool": "gpu_missing", "params": {"device": "gpu"}})
+        self.assertEqual(code, 400)
+        self.assertIn("видеокарта недоступна", err["error"])
+        job = self.run_job("gpu_missing", {})
+        self.assertEqual((job["state"], job["runs"]), ("done", [{"device": "cpu", "returncode": 0}]))
+        self.assertIn("cpu only", job["log"])
+        code, _ = self.json_call("POST", "/api/jobs", {"tool": "gpu_fallback", "params": {"device": "tpu"}})
+        self.assertEqual(code, 400)
+
+    def test_variables_expand_home_and_workdir(self):
+        tool = {"id": "v", "command": ["echo", "{models}", "{home}", "{workdir}"], "params": []}
+        job_dir = self.tmp / "vars"
+        job_dir.mkdir(exist_ok=True)
+        runs = build_runs(tool, {}, {"models": "{workdir}/models/x", "home": "~/voices"},
+                          self.settings.workdir, job_dir, "/r", "py")
+        work = str(Path(self.settings.workdir).resolve())
+        self.assertEqual(runs, [{"device": "", "env": {}, "argv": ["echo", work + "/models/x",
+                                                                    os.path.expanduser("~/voices"), work]}])
 
     def test_job_param_errors(self):
         self.assertEqual(self.json_call("POST", "/api/jobs", {"tool": "nope"})[0], 404)
@@ -451,6 +523,63 @@ class HubTest(unittest.TestCase):
         finally:
             proc.stdin.close()
             proc.wait(timeout=10)
+
+
+class ExtendPathTest(unittest.TestCase):
+    def test_adds_existing_folders_once(self):
+        saved = os.environ.get("PATH", "")
+        try:
+            with tempfile.TemporaryDirectory() as extra:
+                os.environ["PATH"] = "/usr/bin"
+                self.assertEqual(extend_path([extra, "/definitely/missing/dir", extra]), [extra])
+                self.assertEqual(os.environ["PATH"], "/usr/bin" + os.pathsep + extra)
+                self.assertEqual(extend_path([extra]), [])
+        finally:
+            os.environ["PATH"] = saved
+
+
+class RegistryTest(unittest.TestCase):
+    """The shipped tools.json: GPU variants, auto-editor flags, known placeholders."""
+
+    @classmethod
+    def setUpClass(cls):
+        tools, cls.variables = load_tools(APP / "config" / "tools.json")
+        cls.tools = {t["id"]: t for t in tools}
+
+    def test_auto_editor_never_opens_a_viewer(self):
+        for tid in ("auto_editor_cut", "auto_editor_premiere"):
+            tool = self.tools[tid]
+            for command in (tool["command"], (tool.get("gpu") or {}).get("command", ["--no-open"])):
+                self.assertIn("--no-open", command, tid)
+
+    def test_gpu_variants(self):
+        gpu_tools = {tid for tid, t in self.tools.items() if t.get("gpu")}
+        self.assertEqual(gpu_tools, {"vertical_9x16", "burn_subtitles", "contact_sheet", "auto_editor_cut", "stems"})
+        for tid in ("vertical_9x16", "burn_subtitles", "contact_sheet"):
+            command = self.tools[tid]["gpu"]["command"]
+            self.assertLess(command.index("-hwaccel"), command.index("-i"), tid)
+        for tid in ("vertical_9x16", "burn_subtitles"):
+            command = self.tools[tid]["gpu"]["command"]
+            self.assertIn("h264_nvenc", command)
+            self.assertIn("-cq", command)
+            self.assertNotIn("-crf", command)
+        cut = self.tools["auto_editor_cut"]["gpu"]["command"]
+        self.assertIn("-b:v", cut)  # without a bitrate NVENC makes the file ~3x bigger
+        self.assertEqual(self.tools["stems"]["gpu"]["cpu_env"], {"CUDA_VISIBLE_DEVICES": ""})
+
+    def test_placeholders_are_known(self):
+        from hub.tools import BUILTINS, PLACEHOLDER
+        for tid, tool in self.tools.items():
+            names = {p["name"] for p in tool.get("params", [])} | set(BUILTINS) | set(self.variables)
+            for arg in [*tool["command"], *(tool.get("gpu") or {}).get("command", [])]:
+                for name in PLACEHOLDER.findall(arg):
+                    self.assertIn(name, names, f"{tid}: {{{name}}}")
+
+    def test_choice_labels_cover_choices(self):
+        for tid, tool in self.tools.items():
+            for p in tool.get("params", []):
+                if p.get("labels"):
+                    self.assertEqual(set(p["labels"]), set(p["choices"]), f"{tid}.{p['name']}")
 
 
 class TtsSplitTest(unittest.TestCase):

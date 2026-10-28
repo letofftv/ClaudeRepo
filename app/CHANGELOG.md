@@ -11,6 +11,77 @@
 `hub/__init__.py`, Claude на сервере хранит последнюю применённую в
 `~/hub-ops/applied-version`.
 
+## 0.4.0 — 2026-10-28
+
+По отчёту оператора с сервера (версия 0.2.0):
+
+- **PATH.** При запуске пульт дописывает в PATH папки, которых там нет:
+  `~/.local/bin` (pipx), `/usr/local/bin`, `/usr/lib/wsl/lib` (nvidia-smi
+  в WSL), `/snap/bin`. Пользовательский systemd их не даёт: панель не видела
+  видеокарту, `transcode_nvenc` был «нет на сервере». Та же строка
+  `Environment=PATH=…` — в `deploy/hub.service`.
+- **Голые имена файлов.** `song.wav` в параметре file — это
+  `inputs/song.wav`. Имя с пробелами находится и в том виде, в каком его
+  сохранила загрузка (`my song.wav` → `my_song.wav`).
+- **Видеокарта с откатом на процессор** — блок `gpu` в `tools.json`:
+  - `vertical_9x16`, `burn_subtitles` — `-hwaccel cuda` + NVENC;
+  - `contact_sheet` — декодирование на видеокарте;
+  - `auto_editor_cut` — NVENC 6 Мбит/с;
+  - `stems` — PyTorch на CUDA; повтор на процессоре идёт с
+    `CUDA_VISIBLE_DEVICES=""`.
+
+  В форме есть поле «Где считать»: видеокарта с откатом, только
+  видеокарта, только процессор. В задаче видно, где она считалась.
+- **auto-editor:** `--no-open` у `auto_editor_cut` и `auto_editor_premiere`.
+- **Whisper:** обёртка `tools/whisper_subs.py`:
+  - работает с любым движком;
+  - делает SRT/VTT из JSON;
+  - «auto» — без флага языка;
+  - длинные отрезки режет по словам.
+
+  Пример faster-whisper в Docker — `config/tools.local.example.json`.
+- **Piper:** инструмент `tts_piper` и обёртка `tools/tts_piper.py` —
+  русская озвучка без сервера.
+- **stems:** модели лежат в постоянной папке (переменная
+  `separator_models`, по умолчанию `<рабочая папка>/models/audio-separator`).
+- **Переменные и подписи.** В значениях переменных работают `~` и
+  `{workdir}`; у параметров `choice` есть подписи (`labels`).
+- **Браузерный тест** интерфейса включается только с
+  `HUB_BROWSER_TESTS=1`. Старый обновлятор 0.2.0 гонял его на сервере, и
+  Chromium фермы мог сорвать обновление.
+
+**На сервере** (если сервер пришёл сюда с 0.2.0 — сначала шаги 0.3.0):
+
+1. **`config/tools.local.json` — убрать переопределения, которые теперь в
+   репозитории.** Иначе локальная `command` встанет процессорным вариантом,
+   а блок `gpu` возьмётся из репозитория, и видеокарта будет пробоваться
+   дважды.
+   - `vertical_9x16`, `burn_subtitles`, `contact_sheet`, `auto_editor_cut`
+     — удалить целиком.
+   - `stems` — удалить. Если модели уже лежат в постоянной папке, вписать
+     её в `vars.separator_models`, иначе они скачаются заново.
+   - `whisper` — обернуть свою команду, `params` взять из примера (аудио
+     и видео, подписи языков):
+
+     ```
+     ["{python}", "{repo}/app/tools/whisper_subs.py", "--out", "{out}", "--lang", "{lang}", "--lang-flag=--lang", "--", <прежний docker run … без «--lang {lang}»>]
+     ```
+
+     Проверить на 5 с вокала с «ru» и «auto»: в `out/` есть `subs.srt` и
+     `subs.vtt`.
+2. Drop-in с PATH для `hub.service` больше не нужен — удалить или
+   оставить. Новый `deploy/hub.service` можно скопировать в
+   `~/.config/systemd/user/`, затем `systemctl --user daemon-reload`.
+3. audio-separator: проверить, что `audioread` уже доставлен
+   (`pipx inject audio-separator audioread`).
+4. Piper — только если владелец решит ставить:
+   - `pipx install piper-tts`;
+   - голос `ru_RU-irina-medium` (или другой) — в `~/hub-work/models/piper`,
+     команда в `README.md`, раздел «Пути к Whisper, озвучке и генерации»;
+   - проверить `tts_piper` на двух абзацах.
+5. В «Ответ для песочницы» — новая строка «Видеокарта в задачах»: где
+   посчитались `vertical_9x16` и `stems`, срабатывал ли откат.
+
 ## 0.3.0 — 2026-10-28
 
 - Новый интерфейс на пакете ui-studio (`coding/packs/ui-studio`) по сценариям
